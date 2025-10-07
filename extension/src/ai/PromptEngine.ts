@@ -38,10 +38,12 @@ export class PromptEngine {
         return;
       }
 
-      // Create session
+      // Create session with output language
       this.session = await LanguageModel.create({
         temperature: 0.3,
-        topK: 3
+        topK: 3,
+        systemPrompt: 'You are an expert at detecting psychological manipulation tactics in online content.',
+        outputLanguage: 'en' // Specify English output
       });
 
       this.isAvailable = true;
@@ -58,12 +60,24 @@ export class PromptEngine {
     }
 
     try {
-      const fullPrompt = this.buildPrompt(request);
+      // Truncate context to avoid quota exceeded errors
+      // Keep it very small - Gemini Nano has limited quota
+      const truncatedRequest = {
+        ...request,
+        context: request.context ? request.context.substring(0, 200) : undefined
+      };
+      
+      const fullPrompt = this.buildPrompt(truncatedRequest);
       const response = await this.session.prompt(fullPrompt);
       
       return this.parseResponse(response);
-    } catch (error) {
-      console.error('Prompt API failed:', error);
+    } catch (error: any) {
+      // If quota exceeded or other AI error, fall back to pattern detection
+      if (error?.name === 'QuotaExceededError' || error?.message?.includes('too large')) {
+        console.log('Input too large for AI, using fallback detection');
+      } else {
+        console.error('Prompt API failed:', error);
+      }
       return this.fallbackDetection(request);
     }
   }
@@ -91,13 +105,26 @@ Be precise and factual. Only detect clear manipulation tactics.`;
 
   private parseResponse(response: string): PromptResponse {
     try {
+      // Clean the response - remove markdown code blocks if present
+      let cleanResponse = response.trim();
+      cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      
       // Try to extract JSON from response
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
       }
 
-      const parsed = JSON.parse(jsonMatch[0]);
+      // Clean up common JSON issues
+      let jsonStr = jsonMatch[0];
+      // Fix unescaped quotes in strings
+      jsonStr = jsonStr.replace(/"([^"]*)":\s*"([^"]*)"/g, (_match, key, value) => {
+        // Escape quotes in the value
+        const escapedValue = value.replace(/"/g, '\\"');
+        return `"${key}": "${escapedValue}"`;
+      });
+
+      const parsed = JSON.parse(jsonStr);
       
       return {
         text: response,

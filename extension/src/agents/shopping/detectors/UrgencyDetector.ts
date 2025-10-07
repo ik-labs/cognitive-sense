@@ -4,7 +4,6 @@
 
 import { PageContext, Detection } from '../../base/types';
 import { AIEngineManager } from '../../../ai/AIEngineManager';
-import { PromptEngine } from '../../../ai/PromptEngine';
 import { ShoppingDetector } from '../ShoppingAgent';
 
 export class UrgencyDetector implements ShoppingDetector {
@@ -179,12 +178,17 @@ export class UrgencyDetector implements ShoppingDetector {
     aiManager: AIEngineManager
   ): Promise<Detection | null> {
     try {
-      // Use AI to analyze the urgency content
-      const prompt = `${PromptEngine.prompts.urgency}\n\n"${content.text}"`;
+      // Truncate content to avoid quota issues
+      const truncatedText = content.text.length > 500 
+        ? content.text.substring(0, 500) + '...' 
+        : content.text;
+      
+      // Use AI to analyze the urgency content with minimal context
+      const prompt = `Analyze this text for urgency manipulation tactics: "${truncatedText}"`;
       
       const aiResult = await aiManager.prompt.detect({
         prompt,
-        context: `Page: ${context.url.href}, Type: ${content.type}`
+        context: `Type: ${content.type}` // Minimal context
       });
 
       // Parse AI response
