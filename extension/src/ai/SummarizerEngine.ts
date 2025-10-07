@@ -22,31 +22,31 @@ export class SummarizerEngine {
   async initialize(): Promise<void> {
     try {
       // Check if Chrome Built-in AI Summarizer is available
-      if (!('ai' in window) || !('summarizer' in (window as any).ai)) {
+      if (typeof (window as any).Summarizer === 'undefined') {
         console.log('ℹ️ Chrome Built-in AI Summarizer API not available - using fallback');
         return;
       }
 
-      const ai = (window as any).ai;
+      const Summarizer = (window as any).Summarizer;
       
-      // Check capabilities
-      const capabilities = await ai.summarizer.capabilities();
-      console.log('Summarizer API capabilities:', capabilities);
+      // Check availability
+      const availability = await Summarizer.availability();
+      console.log('Summarizer API availability:', availability);
 
-      if (capabilities.available === 'no') {
-        console.warn('Summarizer API not available');
+      if (availability !== 'available' && availability !== 'ready') {
+        console.log('Summarizer API not ready:', availability);
         return;
       }
 
       // Create summarizer
-      this.summarizer = await ai.summarizer.create({
+      this.summarizer = await Summarizer.create({
         type: 'key-points',
         format: 'plain-text',
-        length: 'short'
+        length: 'medium'
       });
 
       this.isAvailable = true;
-      console.log('SummarizerEngine initialized successfully');
+      console.log('✅ SummarizerEngine initialized successfully');
     } catch (error) {
       console.error('Failed to initialize SummarizerEngine:', error);
       this.isAvailable = false;

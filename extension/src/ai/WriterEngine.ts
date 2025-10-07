@@ -23,31 +23,31 @@ export class WriterEngine {
   async initialize(): Promise<void> {
     try {
       // Check if Chrome Built-in AI Writer is available
-      if (!('ai' in window) || !('writer' in (window as any).ai)) {
+      if (typeof (window as any).Writer === 'undefined') {
         console.log('ℹ️ Chrome Built-in AI Writer API not available - using fallback');
         return;
       }
 
-      const ai = (window as any).ai;
+      const Writer = (window as any).Writer;
       
-      // Check capabilities
-      const capabilities = await ai.writer.capabilities();
-      console.log('Writer API capabilities:', capabilities);
+      // Check availability
+      const availability = await Writer.availability();
+      console.log('Writer API availability:', availability);
 
-      if (capabilities.available === 'no') {
-        console.warn('Writer API not available');
+      if (availability !== 'available' && availability !== 'ready') {
+        console.log('Writer API not ready:', availability);
         return;
       }
 
       // Create writer
-      this.writer = await ai.writer.create({
-        tone: 'friendly',
+      this.writer = await Writer.create({
+        tone: 'formal',
         format: 'plain-text',
         length: 'short'
       });
 
       this.isAvailable = true;
-      console.log('WriterEngine initialized successfully');
+      console.log('✅ WriterEngine initialized successfully');
     } catch (error) {
       console.error('Failed to initialize WriterEngine:', error);
       this.isAvailable = false;

@@ -21,31 +21,31 @@ export class PromptEngine {
 
   async initialize(): Promise<void> {
     try {
-      // Check if Chrome Built-in AI is available
-      if (!('ai' in window) || !('languageModel' in (window as any).ai)) {
+      // Check if Chrome Built-in AI LanguageModel is available
+      if (typeof (window as any).LanguageModel === 'undefined') {
         console.log('ℹ️ Chrome Built-in AI Prompt API not available - using fallback detection');
         return;
       }
 
-      const ai = (window as any).ai;
+      const LanguageModel = (window as any).LanguageModel;
       
-      // Check capabilities
-      const capabilities = await ai.languageModel.capabilities();
-      console.log('Prompt API capabilities:', capabilities);
+      // Check availability
+      const availability = await LanguageModel.availability();
+      console.log('Prompt API availability:', availability);
 
-      if (capabilities.available === 'no') {
-        console.warn('Prompt API not available');
+      if (availability !== 'available' && availability !== 'readily') {
+        console.log('Prompt API not ready:', availability);
         return;
       }
 
       // Create session
-      this.session = await ai.languageModel.create({
+      this.session = await LanguageModel.create({
         temperature: 0.3,
         topK: 3
       });
 
       this.isAvailable = true;
-      console.log('PromptEngine initialized successfully');
+      console.log('✅ PromptEngine initialized successfully');
     } catch (error) {
       console.error('Failed to initialize PromptEngine:', error);
       this.isAvailable = false;
