@@ -41,10 +41,10 @@ export class PromptEngine {
       }
 
       // Create base session with output language
-      // Use lower temperature for faster, more deterministic responses
+      // Balance speed and quality: slightly higher temp for better scoring
       this.baseSession = await LanguageModel.create({
-        temperature: 0.1,
-        topK: 1,
+        temperature: 0.5, // Higher for better quality scoring
+        topK: 3, // Higher for more nuanced responses
         systemPrompt: 'You are a manipulation detector. Always respond with ONLY valid JSON. No explanations.',
         outputLanguage: 'en'
       });

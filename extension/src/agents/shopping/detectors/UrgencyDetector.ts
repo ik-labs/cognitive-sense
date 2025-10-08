@@ -20,15 +20,29 @@ export class UrgencyDetector implements ShoppingDetector {
         return detections;
       }
 
-      // Limit to top 3 most important urgency elements for speed (target: 6-9s)
-      // Prioritize: countdown > scarcity > time_limit > pressure
-      const priorityOrder = ['countdown', 'scarcity', 'time_limit', 'pressure'];
-      const sortedContent = urgencyContent.sort((a, b) => {
-        return priorityOrder.indexOf(a.type) - priorityOrder.indexOf(b.type);
-      });
-      const topContent = sortedContent.slice(0, 3); // Only analyze top 3 for speed
+      // Get diverse set of urgency elements for better coverage
+      // Take 1 of each type for variety in scoring
+      const topContent: typeof urgencyContent = [];
+      const typesSeen = new Set<string>();
       
-      console.log(`⚡ Fast mode: Analyzing top ${topContent.length} of ${urgencyContent.length} urgency elements`);
+      for (const content of urgencyContent) {
+        if (!typesSeen.has(content.type) && topContent.length < 5) {
+          topContent.push(content);
+          typesSeen.add(content.type);
+        }
+      }
+      
+      // If we have less than 5, add more countdowns (highest priority)
+      if (topContent.length < 5) {
+        for (const content of urgencyContent) {
+          if (topContent.length >= 5) break;
+          if (!topContent.includes(content)) {
+            topContent.push(content);
+          }
+        }
+      }
+      
+      console.log(`⚡ Fast mode: Analyzing ${topContent.length} diverse urgency elements (${urgencyContent.length} total)`);
       
       // Batch analyze with AI for better performance
       const analysisPromises = topContent.map(content => 
@@ -199,8 +213,8 @@ export class UrgencyDetector implements ShoppingDetector {
         ? content.text.substring(0, 200) + '...' 
         : content.text;
       
-      // Use AI to analyze the urgency content with minimal, fast prompt
-      const prompt = `Is this urgency manipulation? "${truncatedText}"`;
+      // Use AI to analyze with specific, fast prompt
+      const prompt = `Rate urgency manipulation (0-10): "${truncatedText}"\nCountdown timers, scarcity claims, time pressure = high score.`;
       
       const aiResult = await aiManager.prompt.detect({
         prompt
@@ -215,8 +229,10 @@ export class UrgencyDetector implements ShoppingDetector {
         return null; // Not manipulative enough
       }
 
-      // Calculate severity
-      const severity = score >= 8 ? 'high' : score >= 6 ? 'medium' : 'low';
+      // Calculate severity (adjusted thresholds for shopping context)
+      const severity = score >= 7 ? 'high' : score >= 5 ? 'medium' : 'low';
+      
+      console.log(`📊 Detection: score=${score}, severity=${severity}, detected=${aiResult.detected}`);
 
       // Generate detection
       return {
