@@ -13,6 +13,8 @@ export interface PromptResponse {
   text: string;
   confidence: number;
   reasoning?: string;
+  score?: number; // Add score to the response
+  detected?: boolean; // Add detected flag
 }
 
 export class PromptEngine {
@@ -70,6 +72,9 @@ export class PromptEngine {
       const fullPrompt = this.buildPrompt(truncatedRequest);
       const response = await this.session.prompt(fullPrompt);
       
+      // Log AI response for debugging
+      console.log('🤖 Gemini Nano response:', response);
+      
       return this.parseResponse(response);
     } catch (error: any) {
       // If quota exceeded or other AI error, fall back to pattern detection
@@ -105,22 +110,14 @@ export class PromptEngine {
   private buildPrompt(request: PromptRequest): string {
     const { prompt, context } = request;
     
-    return `You are a cognitive safety expert analyzing web content for psychological manipulation tactics.
+    return `${prompt}
 
 ${context ? `Context: ${context}\n` : ''}
 
-Task: ${prompt}
+Respond with ONLY valid JSON, no other text:
+{"detected": true/false, "score": 0-10, "confidence": 0.0-1.0, "reasoning": "brief explanation"}
 
-Respond in JSON format:
-{
-  "detected": boolean,
-  "score": number (0-10),
-  "confidence": number (0-1),
-  "reasoning": "brief explanation",
-  "evidence": ["specific examples from content"]
-}
-
-Be precise and factual. Only detect clear manipulation tactics.`;
+Be concise and use only valid JSON format.`;
   }
 
   private parseResponse(response: string): PromptResponse {
@@ -128,31 +125,33 @@ Be precise and factual. Only detect clear manipulation tactics.`;
       // Clean the response - remove markdown code blocks if present
       let cleanResponse = response.trim();
       cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      cleanResponse = cleanResponse.replace(/```/g, '');
       
-      // Try to extract JSON from response
-      const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
+      // Try to extract JSON from response - use a more flexible regex
+      const jsonMatch = cleanResponse.match(/\{[^{}]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
       }
 
-      // Clean up common JSON issues
       let jsonStr = jsonMatch[0];
-      // Fix unescaped quotes in strings
-      jsonStr = jsonStr.replace(/"([^"]*)":\s*"([^"]*)"/g, (_match, key, value) => {
-        // Escape quotes in the value
-        const escapedValue = value.replace(/"/g, '\\"');
-        return `"${key}": "${escapedValue}"`;
-      });
-
-      const parsed = JSON.parse(jsonStr);
       
+      // Extract key-value pairs manually to avoid quote issues in reasoning
+      const detectedMatch = jsonStr.match(/"detected"\s*:\s*(true|false)/i);
+      const scoreMatch = jsonStr.match(/"score"\s*:\s*(\d+(?:\.\d+)?)/i);
+      const confidenceMatch = jsonStr.match(/"confidence"\s*:\s*(\d+(?:\.\d+)?)/i);
+      const reasoningMatch = jsonStr.match(/"reasoning"\s*:\s*"([^"]*(?:"[^"]*"[^"]*)*[^"]*)"/i);
+      
+      // Build response from extracted values (more reliable than JSON.parse)
       return {
         text: response,
-        confidence: parsed.confidence || 0.5,
-        reasoning: parsed.reasoning || 'AI analysis completed'
+        detected: detectedMatch ? detectedMatch[1] === 'true' : false,
+        score: scoreMatch ? parseFloat(scoreMatch[1]) : 5,
+        confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5,
+        reasoning: reasoningMatch ? reasoningMatch[1].substring(0, 200) : 'AI analysis completed'
       };
     } catch (error) {
       console.error('Failed to parse AI response:', error);
+      console.log('Raw response:', response.substring(0, 200));
       
       // Fallback parsing
       const score = this.extractScore(response);

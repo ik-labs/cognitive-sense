@@ -197,16 +197,29 @@ export class UrgencyDetector implements ShoppingDetector {
         context: `Type: ${content.type}` // Minimal context
       });
 
-      // Parse AI response
-      const score = this.extractScoreFromResponse(aiResult.text);
-      const isManipulative = score >= 6 || aiResult.text.toLowerCase().includes('manipulation');
+      // Use the score directly from the AI response (already parsed in PromptEngine)
+      const score = aiResult.score || this.extractScoreFromResponse(aiResult.text);
+      const isManipulative = (aiResult.detected !== undefined ? aiResult.detected : score >= 6);
+
+      console.log('🔍 AI Analysis Result:', {
+        text: truncatedText.substring(0, 50),
+        aiScore: aiResult.score,
+        finalScore: score,
+        detected: aiResult.detected,
+        confidence: aiResult.confidence,
+        isManipulative,
+        reasoning: aiResult.reasoning
+      });
 
       if (!isManipulative && score < 4) {
+        console.log('❌ Filtered out - score too low:', score);
         return null; // Not manipulative enough
       }
 
       // Calculate severity
       const severity = score >= 8 ? 'high' : score >= 6 ? 'medium' : 'low';
+      
+      console.log('✅ Detection created:', { score, severity });
 
       // Generate detection
       return {
