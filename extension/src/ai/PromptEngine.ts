@@ -18,7 +18,7 @@ export interface PromptResponse {
 }
 
 export class PromptEngine {
-  private session: any = null;
+  private baseSession: any = null;
   private isAvailable = false;
 
   async initialize(): Promise<void> {
@@ -40,12 +40,13 @@ export class PromptEngine {
         return;
       }
 
-      // Create session with output language
-      this.session = await LanguageModel.create({
-        temperature: 0.3,
-        topK: 3,
-        systemPrompt: 'You are an expert at detecting psychological manipulation tactics in online content.',
-        outputLanguage: 'en' // Specify English output
+      // Create base session with output language
+      // Use lower temperature for faster, more deterministic responses
+      this.baseSession = await LanguageModel.create({
+        temperature: 0.1,
+        topK: 1,
+        systemPrompt: 'You are a manipulation detector. Always respond with ONLY valid JSON. No explanations.',
+        outputLanguage: 'en'
       });
 
       this.isAvailable = true;
@@ -57,23 +58,25 @@ export class PromptEngine {
   }
 
   async detect(request: PromptRequest): Promise<PromptResponse> {
-    if (!this.isAvailable || !this.session) {
+    if (!this.isAvailable || !this.baseSession) {
       return this.fallbackDetection(request);
     }
 
     try {
-      // Truncate context to avoid quota exceeded errors
-      // Keep it very small - Gemini Nano has limited quota
+      // Clone session for stateless, parallel calls (faster!)
+      const session = await this.baseSession.clone();
+      
+      // Remove context entirely for maximum speed
       const truncatedRequest = {
         ...request,
-        context: request.context ? request.context.substring(0, 200) : undefined
+        context: undefined // No context for faster processing
       };
       
       const fullPrompt = this.buildPrompt(truncatedRequest);
-      const response = await this.session.prompt(fullPrompt);
+      const response = await session.prompt(fullPrompt);
       
-      // Log AI response for debugging
-      console.log('🤖 Gemini Nano response:', response);
+      // Destroy cloned session to free memory
+      session.destroy();
       
       return this.parseResponse(response);
     } catch (error: any) {
@@ -88,12 +91,12 @@ export class PromptEngine {
   }
 
   async detectBatch(requests: PromptRequest[]): Promise<PromptResponse[]> {
-    if (!this.isAvailable || !this.session) {
+    if (!this.isAvailable || !this.baseSession) {
       return requests.map(req => this.fallbackDetection(req));
     }
 
     // Process in parallel with a concurrency limit to avoid overwhelming the API
-    const BATCH_SIZE = 3; // Process 3 at a time
+    const BATCH_SIZE = 2; // Process 2 at a time - sweet spot for speed vs API limits
     const results: PromptResponse[] = [];
     
     for (let i = 0; i < requests.length; i += BATCH_SIZE) {
@@ -108,16 +111,13 @@ export class PromptEngine {
   }
 
   private buildPrompt(request: PromptRequest): string {
-    const { prompt, context } = request;
+    const { prompt } = request;
     
+    // Clear, concise prompt that enforces JSON
     return `${prompt}
 
-${context ? `Context: ${context}\n` : ''}
-
-Respond with ONLY valid JSON, no other text:
-{"detected": true/false, "score": 0-10, "confidence": 0.0-1.0, "reasoning": "brief explanation"}
-
-Be concise and use only valid JSON format.`;
+RESPOND WITH ONLY THIS JSON FORMAT (no other text):
+{"detected": true/false, "score": 0-10, "confidence": 0-1, "reasoning": "one sentence"}`;
   }
 
   private parseResponse(response: string): PromptResponse {
@@ -238,19 +238,19 @@ Be concise and use only valid JSON format.`;
   }
 
   async destroy(): Promise<void> {
-    if (this.session) {
+    if (this.baseSession) {
       try {
-        await this.session.destroy();
+        await this.baseSession.destroy();
       } catch (error) {
         console.error('Failed to destroy prompt session:', error);
       }
-      this.session = null;
+      this.baseSession = null;
     }
     this.isAvailable = false;
   }
 
   isReady(): boolean {
-    return this.isAvailable && this.session !== null;
+    return this.isAvailable && this.baseSession !== null;
   }
 
   // Predefined prompts for different detection types

@@ -20,8 +20,18 @@ export class UrgencyDetector implements ShoppingDetector {
         return detections;
       }
 
+      // Limit to top 3 most important urgency elements for speed (target: 6-9s)
+      // Prioritize: countdown > scarcity > time_limit > pressure
+      const priorityOrder = ['countdown', 'scarcity', 'time_limit', 'pressure'];
+      const sortedContent = urgencyContent.sort((a, b) => {
+        return priorityOrder.indexOf(a.type) - priorityOrder.indexOf(b.type);
+      });
+      const topContent = sortedContent.slice(0, 3); // Only analyze top 3 for speed
+      
+      console.log(`⚡ Fast mode: Analyzing top ${topContent.length} of ${urgencyContent.length} urgency elements`);
+      
       // Batch analyze with AI for better performance
-      const analysisPromises = urgencyContent.map(content => 
+      const analysisPromises = topContent.map(content => 
         this.analyzeUrgencyContent(content, context, aiManager)
       );
       
@@ -184,42 +194,29 @@ export class UrgencyDetector implements ShoppingDetector {
     aiManager: AIEngineManager
   ): Promise<Detection | null> {
     try {
-      // Truncate content to avoid quota issues
-      const truncatedText = content.text.length > 500 
-        ? content.text.substring(0, 500) + '...' 
+      // Truncate content to avoid quota issues and speed up processing
+      const truncatedText = content.text.length > 200 
+        ? content.text.substring(0, 200) + '...' 
         : content.text;
       
-      // Use AI to analyze the urgency content with minimal context
-      const prompt = `Analyze this text for urgency manipulation tactics: "${truncatedText}"`;
+      // Use AI to analyze the urgency content with minimal, fast prompt
+      const prompt = `Is this urgency manipulation? "${truncatedText}"`;
       
       const aiResult = await aiManager.prompt.detect({
-        prompt,
-        context: `Type: ${content.type}` // Minimal context
+        prompt
+        // No context for maximum speed
       });
 
       // Use the score directly from the AI response (already parsed in PromptEngine)
       const score = aiResult.score || this.extractScoreFromResponse(aiResult.text);
       const isManipulative = (aiResult.detected !== undefined ? aiResult.detected : score >= 6);
 
-      console.log('🔍 AI Analysis Result:', {
-        text: truncatedText.substring(0, 50),
-        aiScore: aiResult.score,
-        finalScore: score,
-        detected: aiResult.detected,
-        confidence: aiResult.confidence,
-        isManipulative,
-        reasoning: aiResult.reasoning
-      });
-
       if (!isManipulative && score < 4) {
-        console.log('❌ Filtered out - score too low:', score);
         return null; // Not manipulative enough
       }
 
       // Calculate severity
       const severity = score >= 8 ? 'high' : score >= 6 ? 'medium' : 'low';
-      
-      console.log('✅ Detection created:', { score, severity });
 
       // Generate detection
       return {
