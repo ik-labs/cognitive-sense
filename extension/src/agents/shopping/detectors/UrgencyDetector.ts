@@ -65,7 +65,7 @@ export class UrgencyDetector implements ShoppingDetector {
     }
   }
 
-  private extractUrgencyContent(context: PageContext): Array<{
+  private extractUrgencyContent(_context: PageContext): Array<{
     text: string;
     element?: HTMLElement;
     type: 'countdown' | 'scarcity' | 'time_limit' | 'pressure';
@@ -76,46 +76,7 @@ export class UrgencyDetector implements ShoppingDetector {
       type: 'countdown' | 'scarcity' | 'time_limit' | 'pressure';
     }> = [];
 
-    const pageText = context.content.text;
-    const lines = pageText.split('\n').map(line => line.trim()).filter(Boolean);
-
-    for (const line of lines) {
-      const lower = line.toLowerCase();
-      
-      // Countdown timers
-      if (this.hasCountdownPattern(lower)) {
-        content.push({
-          text: line,
-          type: 'countdown'
-        });
-      }
-      
-      // Stock scarcity
-      else if (this.hasScarcityPattern(lower)) {
-        content.push({
-          text: line,
-          type: 'scarcity'
-        });
-      }
-      
-      // Time-limited offers
-      else if (this.hasTimeLimitPattern(lower)) {
-        content.push({
-          text: line,
-          type: 'time_limit'
-        });
-      }
-      
-      // Pressure language
-      else if (this.hasPressurePattern(lower)) {
-        content.push({
-          text: line,
-          type: 'pressure'
-        });
-      }
-    }
-
-    // Also check for countdown elements in DOM
+    // Prioritize DOM elements with countdown/timer classes
     this.findCountdownElements().forEach(element => {
       content.push({
         text: element.textContent || '',
@@ -124,20 +85,25 @@ export class UrgencyDetector implements ShoppingDetector {
       });
     });
 
-    return content.slice(0, 10); // Limit to prevent overload
-  }
+    // Find scarcity elements
+    this.findScarcityElements().forEach(element => {
+      content.push({
+        text: element.textContent || '',
+        element,
+        type: 'scarcity'
+      });
+    });
 
-  private hasCountdownPattern(text: string): boolean {
-    const patterns = [
-      /\d+:\d+:\d+/, // HH:MM:SS
-      /\d+h\s*\d+m\s*\d+s/, // 2h 30m 15s
-      /\d+\s*(hours?|hrs?|minutes?|mins?|seconds?|secs?)\s*(left|remaining)/,
-      /(expires?|ends?)\s*in\s*\d+/,
-      /countdown/,
-      /timer/
-    ];
-    
-    return patterns.some(pattern => pattern.test(text));
+    // Find urgency/pressure elements
+    this.findPressureElements().forEach(element => {
+      content.push({
+        text: element.textContent || '',
+        element,
+        type: 'pressure'
+      });
+    });
+
+    return content.slice(0, 10); // Limit to prevent overload
   }
 
   private hasScarcityPattern(text: string): boolean {
@@ -154,34 +120,6 @@ export class UrgencyDetector implements ShoppingDetector {
     return patterns.some(pattern => pattern.test(text));
   }
 
-  private hasTimeLimitPattern(text: string): boolean {
-    const patterns = [
-      /(limited\s*time|time\s*limited)\s*(offer|deal|sale)/,
-      /(today\s*only|24\s*hours?\s*only)/,
-      /(expires?|ends?)\s*(today|tonight|soon)/,
-      /flash\s*(sale|deal)/,
-      /(deal|offer|sale)\s*expires?/,
-      /while\s*supplies?\s*last/
-    ];
-    
-    return patterns.some(pattern => pattern.test(text));
-  }
-
-  private hasPressurePattern(text: string): boolean {
-    const patterns = [
-      /(act|buy|order)\s*now/,
-      /don'?t\s*(miss|wait)/,
-      /hurry\s*(up)?/,
-      /urgent/,
-      /last\s*chance/,
-      /final\s*(hours?|minutes?|days?)/,
-      /selling\s*fast/,
-      /won'?t\s*last\s*long/
-    ];
-    
-    return patterns.some(pattern => pattern.test(text));
-  }
-
   private findCountdownElements(): HTMLElement[] {
     const selectors = [
       '[class*="countdown"]',
@@ -189,17 +127,61 @@ export class UrgencyDetector implements ShoppingDetector {
       '[id*="countdown"]',
       '[id*="timer"]',
       '[data-countdown]',
-      '[data-timer]'
+      '[data-timer]',
+      '[class*="deal-end"]',
+      '[class*="time-left"]'
     ];
 
+    return this.findElementsBySelectors(selectors);
+  }
+
+  private findScarcityElements(): HTMLElement[] {
+    const selectors = [
+      '[class*="stock"]',
+      '[class*="inventory"]',
+      '[class*="availability"]',
+      '[class*="quantity"]'
+    ];
+
+    const elements = this.findElementsBySelectors(selectors);
+    
+    // Filter to only elements with scarcity text
+    return elements.filter(el => {
+      const text = (el.textContent || '').toLowerCase();
+      return this.hasScarcityPattern(text);
+    });
+  }
+
+  private findPressureElements(): HTMLElement[] {
+    const selectors = [
+      '[class*="urgent"]',
+      '[class*="hurry"]',
+      '[class*="limited"]',
+      '[class*="exclusive"]',
+      '[class*="flash"]'
+    ];
+
+    return this.findElementsBySelectors(selectors);
+  }
+
+  private findElementsBySelectors(selectors: string[]): HTMLElement[] {
     const elements: HTMLElement[] = [];
     
     selectors.forEach(selector => {
-      const found = document.querySelectorAll(selector) as NodeListOf<HTMLElement>;
-      elements.push(...Array.from(found));
+      try {
+        const found = document.querySelectorAll(selector) as NodeListOf<HTMLElement>;
+        elements.push(...Array.from(found));
+      } catch (e) {
+        // Ignore invalid selectors
+      }
     });
 
-    return elements;
+    // Remove duplicates and hidden elements
+    const uniqueElements = Array.from(new Set(elements));
+    return uniqueElements.filter(el => {
+      const rect = el.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0; // Only visible elements
+    });
   }
 
   private async analyzeUrgencyContent(
@@ -244,6 +226,7 @@ export class UrgencyDetector implements ShoppingDetector {
         title: this.generateTitle(content.type, severity),
         description: this.generateDescription(content.text, content.type),
         reasoning: aiResult.reasoning || 'AI detected urgency manipulation',
+        element: content.element, // Include DOM element for highlighting
         details: [
           { label: 'Type', value: content.type.replace('_', ' ') },
           { label: 'Content', value: content.text.slice(0, 100) + (content.text.length > 100 ? '...' : '') },

@@ -70,6 +70,9 @@ export interface Detection {
   description: string;
   reasoning: string;
   
+  // DOM Reference (for highlighting)
+  element?: HTMLElement;
+  
   // Details
   details: Array<{
     label: string;
