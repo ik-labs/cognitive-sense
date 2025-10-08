@@ -82,6 +82,26 @@ export class PromptEngine {
     }
   }
 
+  async detectBatch(requests: PromptRequest[]): Promise<PromptResponse[]> {
+    if (!this.isAvailable || !this.session) {
+      return requests.map(req => this.fallbackDetection(req));
+    }
+
+    // Process in parallel with a concurrency limit to avoid overwhelming the API
+    const BATCH_SIZE = 3; // Process 3 at a time
+    const results: PromptResponse[] = [];
+    
+    for (let i = 0; i < requests.length; i += BATCH_SIZE) {
+      const batch = requests.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(req => this.detect(req))
+      );
+      results.push(...batchResults);
+    }
+    
+    return results;
+  }
+
   private buildPrompt(request: PromptRequest): string {
     const { prompt, context } = request;
     

@@ -20,9 +20,15 @@ export class UrgencyDetector implements ShoppingDetector {
         return detections;
       }
 
-      // Analyze with AI
-      for (const content of urgencyContent) {
-        const detection = await this.analyzeUrgencyContent(content, context, aiManager);
+      // Batch analyze with AI for better performance
+      const analysisPromises = urgencyContent.map(content => 
+        this.analyzeUrgencyContent(content, context, aiManager)
+      );
+      
+      const results = await Promise.all(analysisPromises);
+      
+      // Filter out null results
+      for (const detection of results) {
         if (detection) {
           detections.push(detection);
         }
