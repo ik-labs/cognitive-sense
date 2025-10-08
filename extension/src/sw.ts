@@ -62,6 +62,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleDetectionComplete(message.data, sender);
       break;
       
+    case 'OPEN_SIDE_PANEL':
+      if (sender.tab?.id) {
+        chrome.sidePanel.open({ tabId: sender.tab.id })
+          .then(() => sendResponse({ success: true }))
+          .catch(error => sendResponse({ error: error.message }));
+        return true;
+      }
+      break;
+      
     case 'HYBRID_REQUEST':
       handleHybridRequest(message.data)
         .then(sendResponse)

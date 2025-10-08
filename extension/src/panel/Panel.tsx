@@ -26,14 +26,16 @@ export function Panel() {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       const currentUrl = tab.url || '';
 
-      // TODO: Load detection data from storage
-      // For now, show placeholder
+      // Load detection data from storage
+      const result = await chrome.storage.local.get(['latestDetections', 'latestScore']);
+      const detections = result.latestDetections || [];
+      const overallScore = result.latestScore || 0;
 
       setState({
         loading: false,
         currentUrl,
-        detections: [],
-        overallScore: 0
+        detections,
+        overallScore
       });
     } catch (error) {
       console.error('Failed to initialize panel:', error);
@@ -44,6 +46,22 @@ export function Panel() {
       }));
     }
   };
+
+  // Listen for detection updates
+  useEffect(() => {
+    const handleMessage = (message: any) => {
+      if (message.type === 'DETECTION_COMPLETE') {
+        setState(prev => ({
+          ...prev,
+          detections: message.data.detections || [],
+          overallScore: message.data.overallScore || 0
+        }));
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(handleMessage);
+    return () => chrome.runtime.onMessage.removeListener(handleMessage);
+  }, []);
 
   if (state.loading) {
     return (
@@ -94,33 +112,82 @@ export function Panel() {
 
         {/* Status */}
         <section className="cs-mb-6">
-          <div className="cs-bg-green-50 cs-border cs-border-green-200 cs-rounded-lg cs-p-4 cs-text-center">
-            <div className="cs-text-3xl cs-font-bold cs-text-green-600 cs-mb-1">
-              {state.overallScore}
-              <span className="cs-text-lg cs-opacity-70">/100</span>
+          {state.detections.length === 0 ? (
+            <div className="cs-bg-green-50 cs-border cs-border-green-200 cs-rounded-lg cs-p-4 cs-text-center">
+              <div className="cs-text-3xl cs-font-bold cs-text-green-600 cs-mb-1">
+                {state.overallScore}
+                <span className="cs-text-lg cs-opacity-70">/100</span>
+              </div>
+              <div className="cs-text-sm cs-text-green-700 cs-font-medium">Safe</div>
+              <div className="cs-text-xs cs-text-green-600 cs-mt-1">
+                No manipulation detected
+              </div>
             </div>
-            <div className="cs-text-sm cs-text-green-700 cs-font-medium">Safe</div>
-            <div className="cs-text-xs cs-text-green-600 cs-mt-1">
-              No manipulation detected
+          ) : (
+            <div className="cs-bg-orange-50 cs-border cs-border-orange-200 cs-rounded-lg cs-p-4 cs-text-center">
+              <div className="cs-text-3xl cs-font-bold cs-text-orange-600 cs-mb-1">
+                {state.detections.length}
+              </div>
+              <div className="cs-text-sm cs-text-orange-700 cs-font-medium">
+                Manipulation Tactics Detected
+              </div>
+              <div className="cs-text-xs cs-text-orange-600 cs-mt-1">
+                {state.detections.filter(d => d.severity === 'high').length} high severity
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
-        {/* Placeholder for future features */}
-        <section className="cs-space-y-4">
-          <div className="cs-bg-gray-50 cs-rounded-lg cs-p-4 cs-text-center cs-text-gray-500">
-            <div className="cs-text-sm cs-mb-2">🚧 Coming Soon</div>
-            <div className="cs-text-xs">
-              Detection breakdown, history, and settings will appear here
-            </div>
-          </div>
-        </section>
+        {/* Detections List */}
+        {state.detections.length > 0 && (
+          <section className="cs-space-y-3">
+            <h2 className="cs-text-sm cs-font-medium cs-text-gray-700 cs-mb-3">
+              Detected Tactics
+            </h2>
+            {state.detections.map((detection: any, index: number) => (
+              <div
+                key={detection.id || index}
+                className={`cs-bg-white cs-border-l-4 cs-rounded-lg cs-p-4 cs-shadow-sm ${
+                  detection.severity === 'high' ? 'cs-border-red-500' :
+                  detection.severity === 'medium' ? 'cs-border-orange-500' :
+                  'cs-border-green-500'
+                }`}
+              >
+                <div className="cs-flex cs-items-start cs-justify-between cs-mb-2">
+                  <span className={`cs-text-xs cs-font-bold cs-px-2 cs-py-1 cs-rounded ${
+                    detection.severity === 'high' ? 'cs-bg-red-100 cs-text-red-700' :
+                    detection.severity === 'medium' ? 'cs-bg-orange-100 cs-text-orange-700' :
+                    'cs-bg-green-100 cs-text-green-700'
+                  }`}>
+                    {detection.severity?.toUpperCase()}
+                  </span>
+                  <span className="cs-text-xs cs-text-gray-500">
+                    {Math.round((detection.confidence || 0.5) * 100)}% confident
+                  </span>
+                </div>
+                <h3 className="cs-text-sm cs-font-semibold cs-text-gray-900 cs-mb-2">
+                  {detection.title}
+                </h3>
+                <p className="cs-text-xs cs-text-gray-600 cs-mb-2">
+                  {detection.description}
+                </p>
+                {detection.reasoning && (
+                  <div className="cs-bg-blue-50 cs-rounded cs-p-2 cs-mt-2">
+                    <p className="cs-text-xs cs-text-blue-900">
+                      <strong className="cs-font-semibold">🤖 AI Analysis:</strong> {detection.reasoning}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </section>
+        )}
       </main>
 
       {/* Footer */}
       <footer className="cs-border-t cs-border-gray-200 cs-p-3 cs-text-center">
         <div className="cs-text-xs cs-text-gray-500">
-          Day 1 Foundation Complete ✅
+          Powered by Chrome Built-in AI (Gemini Nano) 🤖
         </div>
       </footer>
     </div>

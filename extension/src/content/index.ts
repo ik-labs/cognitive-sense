@@ -1,10 +1,11 @@
 // Content Script Entry Point for CognitiveSense
 
-import { AgentRegistry } from '@/agents/base/AgentRegistry';
-import { PageContextBuilder } from '@/core/PageContext';
-import { LocalStorageManager } from '@/storage/LocalStorage';
-import { AIEngineManager } from '@/ai/AIEngineManager';
-import { ShoppingPersuasionAgent } from '@/agents/shopping/ShoppingAgent';
+import { AgentRegistry } from '../agents/base/AgentRegistry';
+import { AIEngineManager } from '../ai/AIEngineManager';
+import { ShoppingPersuasionAgent } from '../agents/shopping/ShoppingAgent';
+import { OverlayManager } from '../ui/OverlayManager';
+import { PageContextBuilder } from '../core/PageContext';
+import { LocalStorageManager } from '../storage/LocalStorage';
 
 console.log('CognitiveSense content script loaded');
 
@@ -13,6 +14,7 @@ class ContentScript {
   private contextBuilder: PageContextBuilder;
   private storage: LocalStorageManager;
   private aiManager: AIEngineManager;
+  private overlayManager: OverlayManager;
   private isAnalyzing = false;
   private analysisTimeout: number | null = null;
   
@@ -21,6 +23,7 @@ class ContentScript {
     this.contextBuilder = new PageContextBuilder();
     this.storage = new LocalStorageManager();
     this.aiManager = AIEngineManager.getInstance();
+    this.overlayManager = new OverlayManager();
   }
   
   async initialize(): Promise<void> {
@@ -108,13 +111,20 @@ class ContentScript {
         const primaryAgent = activeAgents[0];
         const analysis = primaryAgent.analyze(allDetections);
         overallScore = analysis.overallScore;
-        Object.assign(breakdown, analysis.breakdown);
         
         // Render overlays for significant detections
         await this.renderOverlays(allDetections, activeAgents);
       }
       
-      // Notify service worker
+      // Save to storage for side panel
+      await chrome.storage.local.set({
+        latestDetections: allDetections,
+        latestScore: overallScore,
+        latestUrl: window.location.href,
+        latestTimestamp: new Date().toISOString()
+      });
+
+      // Send results to service worker and side panel
       chrome.runtime.sendMessage({
         type: 'DETECTION_COMPLETE',
         data: {
@@ -122,13 +132,12 @@ class ContentScript {
           overallScore,
           breakdown,
           url: window.location.href,
-          timestamp: Date.now()
+          timestamp: new Date().toISOString()
         }
       });
       
       const totalTime = performance.now() - startTime;
       console.log(`Page analysis completed in ${totalTime}ms. Found ${allDetections.length} detections.`);
-      
     } catch (error) {
       console.error('Page analysis failed:', error);
     } finally {
@@ -140,13 +149,14 @@ class ContentScript {
    * Render overlays for detections
    */
   private async renderOverlays(detections: any[], _agents: any[]): Promise<void> {
-    // TODO: Implement overlay rendering (Day 3)
-    // For now, just log the detections
     console.log('Detections to render:', detections.map(d => ({
       type: d.type,
       score: d.score,
       severity: d.severity
     })));
+
+    // Render visual overlays
+    await this.overlayManager.render(detections);
   }
   
   /**
