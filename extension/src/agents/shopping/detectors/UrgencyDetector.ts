@@ -26,16 +26,16 @@ export class UrgencyDetector implements ShoppingDetector {
       const typesSeen = new Set<string>();
       
       for (const content of urgencyContent) {
-        if (!typesSeen.has(content.type) && topContent.length < 5) {
+        if (!typesSeen.has(content.type) && topContent.length < 3) {
           topContent.push(content);
           typesSeen.add(content.type);
         }
       }
       
-      // If we have less than 5, add more countdowns (highest priority)
-      if (topContent.length < 5) {
+      // If we have less than 3, add more (but avoid duplicates)
+      if (topContent.length < 3) {
         for (const content of urgencyContent) {
-          if (topContent.length >= 5) break;
+          if (topContent.length >= 3) break;
           if (!topContent.includes(content)) {
             topContent.push(content);
           }
@@ -77,7 +77,9 @@ export class UrgencyDetector implements ShoppingDetector {
     }> = [];
 
     // Prioritize DOM elements with countdown/timer classes
-    this.findCountdownElements().forEach(element => {
+    const countdownElements = this.findCountdownElements();
+    console.log(`🔍 Found ${countdownElements.length} countdown elements`);
+    countdownElements.forEach(element => {
       content.push({
         text: element.textContent || '',
         element,
@@ -86,7 +88,9 @@ export class UrgencyDetector implements ShoppingDetector {
     });
 
     // Find scarcity elements
-    this.findScarcityElements().forEach(element => {
+    const scarcityElements = this.findScarcityElements();
+    console.log(`🔍 Found ${scarcityElements.length} scarcity elements`);
+    scarcityElements.forEach(element => {
       content.push({
         text: element.textContent || '',
         element,
@@ -95,7 +99,9 @@ export class UrgencyDetector implements ShoppingDetector {
     });
 
     // Find urgency/pressure elements
-    this.findPressureElements().forEach(element => {
+    const pressureElements = this.findPressureElements();
+    console.log(`🔍 Found ${pressureElements.length} pressure elements`);
+    pressureElements.forEach(element => {
       content.push({
         text: element.textContent || '',
         element,
@@ -103,7 +109,30 @@ export class UrgencyDetector implements ShoppingDetector {
       });
     });
 
-    return content.slice(0, 10); // Limit to prevent overload
+    console.log(`📊 Total urgency content found: ${content.length}`);
+    
+    // Filter out junk content and deduplicate
+    const seen = new Set<string>();
+    const filtered = content.filter(item => {
+      const text = item.text.trim();
+      
+      // Filter out empty, very short, or junk content
+      if (text.length < 5) return false;
+      if (text.startsWith('{') || text.startsWith('[')) return false; // JSON
+      if (text.includes('AUI_TEMPLATE')) return false; // Config data
+      if (text.includes('weblab')) return false; // Internal data
+      
+      // Deduplicate by text content
+      const key = text.substring(0, 100); // Use first 100 chars as key
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+    
+    console.log(`📊 After filtering and deduplication: ${filtered.length} unique elements`);
+    return filtered.slice(0, 10); // Limit to prevent overload
   }
 
   private hasScarcityPattern(text: string): boolean {
@@ -129,10 +158,30 @@ export class UrgencyDetector implements ShoppingDetector {
       '[data-countdown]',
       '[data-timer]',
       '[class*="deal-end"]',
-      '[class*="time-left"]'
+      '[class*="time-left"]',
+      '[class*="deal"]',
+      '[class*="festival"]',
+      '[class*="sale"]'
     ];
 
-    return this.findElementsBySelectors(selectors);
+    const elements = this.findElementsBySelectors(selectors);
+    
+    // Also search for elements containing countdown-like text
+    const allElements = Array.from(document.querySelectorAll('div, span, p')) as HTMLElement[];
+    const textBasedElements = allElements.filter(el => {
+      const text = (el.textContent || '').toLowerCase();
+      // Look for countdown patterns in text
+      return (
+        /\d+\s*(hours?|hrs?|minutes?|mins?|seconds?|secs?)/.test(text) ||
+        /festival.*\d+/.test(text) ||
+        /deal.*\d+/.test(text) ||
+        text.includes('no_of_hours') ||
+        text.includes('no_of_minutes') ||
+        text.includes('no_of_seconds')
+      );
+    });
+
+    return [...elements, ...textBasedElements].slice(0, 20);
   }
 
   private findScarcityElements(): HTMLElement[] {
