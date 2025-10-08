@@ -15,8 +15,8 @@ import { AIEngineManager } from '../../ai/AIEngineManager';
 
 // Import detectors
 import { UrgencyDetector } from './detectors/UrgencyDetector';
-// import { AnchoringDetector } from './detectors/AnchoringDetector';
-// import { SocialProofDetector } from './detectors/SocialProofDetector';
+import { AnchoringDetector } from './detectors/AnchoringDetector';
+import { SocialProofDetector } from './detectors/SocialProofDetector';
 // import { FOMODetector } from './detectors/FOMODetector';
 // import { BundlingDetector } from './detectors/BundlingDetector';
 // import { DarkPatternDetector } from './detectors/DarkPatternDetector';
@@ -49,10 +49,10 @@ export class ShoppingPersuasionAgent extends BaseAgent {
     
     // Initialize detectors
     this.detectors = [
-      new UrgencyDetector()
-      // TODO: Add other detectors after fixing TypeScript issues
-      // new AnchoringDetector(),
-      // new SocialProofDetector(),
+      new UrgencyDetector(),
+      new AnchoringDetector(),
+      new SocialProofDetector()
+      // TODO: Add remaining detectors
       // new FOMODetector(),
       // new BundlingDetector(),
       // new DarkPatternDetector()
