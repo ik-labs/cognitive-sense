@@ -58,26 +58,35 @@ export class SocialMediaAgent extends BaseAgent {
 
   canHandle(context: PageContext): boolean {
     const socialDomains = [
-      'facebook.com',
-      'twitter.com',
+      'facebook',
+      'twitter',
       'x.com',
-      'instagram.com',
-      'tiktok.com',
-      'linkedin.com',
-      'reddit.com',
-      'threads.net',
-      'mastodon.social',
-      'bluesky.social'
+      'instagram',
+      'tiktok',
+      'linkedin',
+      'reddit',
+      'threads',
+      'mastodon',
+      'bluesky'
     ];
 
-    const domain = context.url.hostname.toLowerCase();
+    const domain = context.domain.toLowerCase();
+    
+    console.log('SocialMediaAgent canHandle check:', {
+      domain: context.domain,
+      type: context.metadata.type,
+      url: context.url.href || context.url
+    });
+    
     const isSocialPlatform = socialDomains.some(d => domain.includes(d));
 
     if (isSocialPlatform) {
-      console.log(`✅ Detected as social media page: ${domain}`);
+      console.log(`✅ SocialMediaAgent: Detected as social media page: ${domain}`);
+      return true;
     }
 
-    return isSocialPlatform;
+    console.log(`❌ SocialMediaAgent: Not a social platform: ${domain}`);
+    return false;
   }
 
   async detect(context: PageContext): Promise<Detection[]> {
