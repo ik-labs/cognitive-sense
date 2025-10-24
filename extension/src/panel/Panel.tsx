@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface PanelState {
   loading: boolean;
@@ -15,9 +15,26 @@ export function Panel() {
     detections: [],
     overallScore: 0
   });
+  
+  const prevUrlRef = React.useRef<string>('');
 
   useEffect(() => {
     initializePanel();
+    
+    // Listen for tab changes by checking URL periodically
+    const interval = setInterval(async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const currentUrl = tab.url || '';
+      
+      // If URL changed, refresh the panel
+      if (currentUrl !== prevUrlRef.current) {
+        console.log('📱 Tab changed from', prevUrlRef.current, 'to', currentUrl);
+        prevUrlRef.current = currentUrl;
+        initializePanel();
+      }
+    }, 300);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const initializePanel = async () => {
