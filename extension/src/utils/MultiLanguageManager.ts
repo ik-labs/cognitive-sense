@@ -181,8 +181,20 @@ export class MultiLanguageManager {
   setPreferredLanguage(languageCode: string): void {
     if (SUPPORTED_LANGUAGES[languageCode]) {
       this.userPreferredLanguage = languageCode;
-      localStorage.setItem('cs_preferred_language', languageCode);
-      Debug.info(`User language preference set to ${languageCode}`);
+      
+      try {
+        // Only use localStorage if available (not in service worker)
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('cs_preferred_language', languageCode);
+          Debug.info(`💾 User language preference saved: ${languageCode}`);
+        } else {
+          Debug.debug(`📍 localStorage not available, preference not persisted`);
+        }
+      } catch (error) {
+        Debug.warning('Failed to save language preference to localStorage', error);
+      }
+      
+      Debug.info(`🌐 User language preference set to ${languageCode}`);
     }
   }
 
@@ -237,9 +249,19 @@ export class MultiLanguageManager {
    * Load user preference from storage
    */
   private loadUserPreference(): void {
-    const stored = localStorage.getItem('cs_preferred_language');
-    if (stored && SUPPORTED_LANGUAGES[stored]) {
-      this.userPreferredLanguage = stored;
+    try {
+      // Only use localStorage if available (not in service worker)
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem('cs_preferred_language');
+        if (stored && SUPPORTED_LANGUAGES[stored]) {
+          this.userPreferredLanguage = stored;
+          Debug.debug(`📍 Loaded user language preference: ${stored}`);
+        }
+      } else {
+        Debug.debug('📍 localStorage not available (service worker context)');
+      }
+    } catch (error) {
+      Debug.warning('Failed to load language preference from localStorage', error);
     }
   }
 
