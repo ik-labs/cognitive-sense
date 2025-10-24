@@ -192,13 +192,64 @@ class ContentScript {
    * Set up observers for dynamic content changes
    */
   private setupObservers(): void {
-    // Disabled auto-reanalysis to prevent recursive triggers
-    // Analysis only happens on:
-    // 1. Initial page load (in initialize())
-    // 2. Manual page refresh (F5)
-    // 3. Explicit reanalysis request from service worker
+    // For social media, add scroll detection to analyze new content
+    // For shopping sites, keep page load only to avoid excessive API calls
     
-    console.log('✅ Observers setup complete - Analysis on page load only');
+    const isSocialMedia = this.isSocialMediaPage();
+    
+    if (isSocialMedia) {
+      console.log('📱 Social media detected - enabling scroll-based analysis');
+      this.setupScrollListener();
+    } else {
+      console.log('🛒 Shopping site detected - analysis on page load only');
+    }
+    
+    console.log('✅ Observers setup complete');
+  }
+
+  /**
+   * Check if current page is a social media platform
+   */
+  private isSocialMediaPage(): boolean {
+    const socialDomains = [
+      'facebook.com',
+      'twitter.com',
+      'x.com',
+      'instagram.com',
+      'tiktok.com',
+      'linkedin.com',
+      'reddit.com',
+      'threads.net',
+      'mastodon.social',
+      'bluesky.social',
+      'youtube.com'
+    ];
+    
+    const domain = window.location.hostname.toLowerCase();
+    return socialDomains.some(d => domain.includes(d));
+  }
+
+  /**
+   * Set up scroll listener for social media feeds
+   */
+  private setupScrollListener(): void {
+    let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
+    const SCROLL_DEBOUNCE_MS = 2000; // Wait 2 seconds after scroll stops
+    
+    window.addEventListener('scroll', () => {
+      // Clear previous timeout
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+      
+      // Debounce: only analyze after scroll stops for 2 seconds
+      scrollTimeout = setTimeout(async () => {
+        if (!this.isAnalyzing) {
+          console.log('📜 Scroll detected - re-analyzing page for new content');
+          await this.analyzePage();
+        }
+      }, SCROLL_DEBOUNCE_MS);
+    }, { passive: true });
   }
 
   /**
