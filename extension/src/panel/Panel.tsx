@@ -232,6 +232,22 @@ export function Panel() {
                     </p>
                   </div>
                 )}
+                
+                {detection.userFriendlyWarning && (
+                  <div className="cs-bg-amber-50 cs-rounded cs-p-2 cs-mt-2">
+                    <p className="cs-text-xs cs-text-amber-900">
+                      <strong className="cs-font-semibold">⚠️ What This Means:</strong> {detection.userFriendlyWarning}
+                    </p>
+                  </div>
+                )}
+                
+                {detection.educationalTip && (
+                  <div className="cs-bg-green-50 cs-rounded cs-p-2 cs-mt-2">
+                    <p className="cs-text-xs cs-text-green-900">
+                      <strong className="cs-font-semibold">💡 Smart Tip:</strong> {detection.educationalTip}
+                    </p>
+                  </div>
+                )}
               </div>
             ))}
           </section>

@@ -4,6 +4,7 @@
 
 import { PageContext, Detection } from '../../base/types';
 import { AIEngineManager } from '../../../ai/AIEngineManager';
+import { ContentGenerator } from '../../../ai/ContentGenerator';
 import { ShoppingDetector } from '../ShoppingAgent';
 
 export class UrgencyDetector implements ShoppingDetector {
@@ -283,10 +284,11 @@ export class UrgencyDetector implements ShoppingDetector {
       
       console.log(`📊 Detection: score=${score}, severity=${severity}, detected=${aiResult.detected}`);
 
-      // Generate detection
-      return {
+      // Generate user-friendly content using Writer API
+      const contentGenerator = new ContentGenerator();
+      const detection: Detection = {
         id: `urgency_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        agentKey: 'shopping_persuasion',
+        agentKey: 'shopping_persuasion' as any,
         type: 'urgency',
         score,
         severity,
@@ -318,6 +320,17 @@ export class UrgencyDetector implements ShoppingDetector {
         pageUrl: context.url.href,
         learnMoreUrl: 'https://cognitivesense.app/learn/urgency-tactics'
       };
+
+      // Generate AI-powered user-friendly content asynchronously
+      contentGenerator.generateUserFriendlyWarning(detection as any).then(warning => {
+        (detection as any).userFriendlyWarning = warning;
+      }).catch(err => console.log('Warning generation skipped:', err));
+
+      contentGenerator.generateEducationalTip(detection as any).then(tip => {
+        (detection as any).educationalTip = tip;
+      }).catch(err => console.log('Tip generation skipped:', err));
+
+      return detection;
     } catch (error) {
       console.error('Failed to analyze urgency content:', error);
       
