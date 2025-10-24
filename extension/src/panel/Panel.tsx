@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { multiLanguageManager, SUPPORTED_LANGUAGES } from '../utils/MultiLanguageManager';
 
 interface PanelState {
   loading: boolean;
@@ -6,6 +7,8 @@ interface PanelState {
   detections: any[];
   overallScore: number;
   error?: string;
+  detectedLanguage: string;
+  preferredLanguage: string;
 }
 
 export function Panel() {
@@ -13,7 +16,9 @@ export function Panel() {
     loading: true,
     currentUrl: '',
     detections: [],
-    overallScore: 0
+    overallScore: 0,
+    detectedLanguage: 'en',
+    preferredLanguage: multiLanguageManager.getPreferredLanguage()
   });
   
   const prevUrlRef = React.useRef<string>('');
@@ -64,11 +69,17 @@ export function Panel() {
       console.log(`📊 Panel loaded: ${detections.length} detections, score: ${overallScore}`);
       console.log(`✅ Using ${result[`detections_${urlHash}`] ? 'URL-specific' : 'fallback'} data`);
 
+      // Detect page language
+      const pageText = detections.map((d: any) => d.description).join(' ');
+      const detectedLang = multiLanguageManager.detectPageLanguage(pageText);
+
       setState({
         loading: false,
         currentUrl,
         detections,
-        overallScore
+        overallScore,
+        detectedLanguage: detectedLang,
+        preferredLanguage: multiLanguageManager.getPreferredLanguage()
       });
     } catch (error) {
       console.error('Failed to initialize panel:', error);
@@ -143,11 +154,40 @@ export function Panel() {
     <div className="cs-w-full cs-h-screen cs-bg-white cs-flex cs-flex-col">
       {/* Header */}
       <header className="cs-bg-white cs-border-b cs-border-gray-200 cs-p-4">
-        <div className="cs-flex cs-items-center cs-gap-3">
-          <span className="cs-text-2xl">🛡️</span>
-          <div>
-            <h1 className="cs-text-lg cs-font-semibold cs-text-gray-900">CognitiveSense</h1>
-            <p className="cs-text-xs cs-text-gray-500">Privacy-first cognitive safety</p>
+        <div className="cs-flex cs-items-center cs-justify-between cs-gap-3 cs-mb-3">
+          <div className="cs-flex cs-items-center cs-gap-3">
+            <span className="cs-text-2xl">🛡️</span>
+            <div>
+              <h1 className="cs-text-lg cs-font-semibold cs-text-gray-900">CognitiveSense</h1>
+              <p className="cs-text-xs cs-text-gray-500">Privacy-first cognitive safety</p>
+            </div>
+          </div>
+          
+          {/* Language Selector */}
+          <div className="cs-flex cs-items-center cs-gap-2">
+            <select
+              value={state.preferredLanguage}
+              onChange={(e) => {
+                multiLanguageManager.setPreferredLanguage(e.target.value);
+                setState(prev => ({
+                  ...prev,
+                  preferredLanguage: e.target.value
+                }));
+              }}
+              className="cs-text-xs cs-px-2 cs-py-1 cs-border cs-border-gray-300 cs-rounded cs-bg-white cs-cursor-pointer"
+              title="Select language for translations"
+            >
+              {Object.values(SUPPORTED_LANGUAGES).map(lang => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.flag} {lang.name}
+                </option>
+              ))}
+            </select>
+            {state.detectedLanguage !== 'en' && (
+              <span className="cs-text-xs cs-text-gray-500 cs-font-semibold" title="Auto-detected page language">
+                🌐 {SUPPORTED_LANGUAGES[state.detectedLanguage]?.name || state.detectedLanguage}
+              </span>
+            )}
           </div>
         </div>
       </header>
