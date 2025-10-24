@@ -5,6 +5,7 @@
 import { PageContext, Detection } from '../../base/types';
 import { AIEngineManager } from '../../../ai/AIEngineManager';
 import { ContentGenerator } from '../../../ai/ContentGenerator';
+import { Debug } from '../../../utils/Debug';
 import { ShoppingDetector } from '../ShoppingAgent';
 
 export class UrgencyDetector implements ShoppingDetector {
@@ -283,6 +284,7 @@ export class UrgencyDetector implements ShoppingDetector {
       const severity = score >= 7 ? 'high' : score >= 5 ? 'medium' : 'low';
       
       console.log(`📊 Detection: score=${score}, severity=${severity}, detected=${aiResult.detected}`);
+      Debug.detectionFound('Urgency', score, severity);
 
       // Generate user-friendly content using Writer API
       const contentGenerator = new ContentGenerator();
@@ -321,14 +323,23 @@ export class UrgencyDetector implements ShoppingDetector {
         learnMoreUrl: 'https://cognitivesense.app/learn/urgency-tactics'
       };
 
-      // Generate AI-powered user-friendly content asynchronously
-      contentGenerator.generateUserFriendlyWarning(detection as any).then(warning => {
+      // Generate AI-powered user-friendly content (wait for it)
+      try {
+        Debug.apiCall('Writer', 'start');
+        const warning = await contentGenerator.generateUserFriendlyWarning(detection as any);
         (detection as any).userFriendlyWarning = warning;
-      }).catch(err => console.log('Warning generation skipped:', err));
+        Debug.contentGenerated('Urgency', 'userFriendlyWarning');
+      } catch (err) {
+        Debug.warning('Warning generation skipped', err);
+      }
 
-      contentGenerator.generateEducationalTip(detection as any).then(tip => {
+      try {
+        const tip = await contentGenerator.generateEducationalTip(detection as any);
         (detection as any).educationalTip = tip;
-      }).catch(err => console.log('Tip generation skipped:', err));
+        Debug.contentGenerated('Urgency', 'educationalTip');
+      } catch (err) {
+        Debug.warning('Tip generation skipped', err);
+      }
 
       return detection;
     } catch (error) {
