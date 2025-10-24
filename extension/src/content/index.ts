@@ -16,7 +16,6 @@ class ContentScript {
   private aiManager: AIEngineManager;
   private overlayManager: OverlayManager;
   private isAnalyzing = false;
-  private analysisTimeout: number | null = null;
   
   constructor() {
     this.registry = AgentRegistry.getInstance();
@@ -171,42 +170,13 @@ class ContentScript {
    * Set up observers for dynamic content changes
    */
   private setupObservers(): void {
-    // Debounced re-analysis on DOM changes
-    const observer = new MutationObserver(() => {
-      if (this.analysisTimeout) {
-        clearTimeout(this.analysisTimeout);
-      }
-      
-      this.analysisTimeout = window.setTimeout(() => {
-        this.analyzePage();
-      }, 2000); // Wait 2 seconds after last change
-    });
+    // Disabled auto-reanalysis to prevent recursive triggers
+    // Analysis only happens on:
+    // 1. Initial page load (in initialize())
+    // 2. Manual page refresh (F5)
+    // 3. Explicit reanalysis request from service worker
     
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: false // Don't trigger on style changes
-    });
-    
-    // Re-analyze on significant scroll (new content may be visible)
-    let lastScrollTop = 0;
-    window.addEventListener('scroll', () => {
-      const scrollTop = window.pageYOffset;
-      const scrollDelta = Math.abs(scrollTop - lastScrollTop);
-      
-      // If scrolled more than 50% of viewport height
-      if (scrollDelta > window.innerHeight * 0.5) {
-        lastScrollTop = scrollTop;
-        
-        if (this.analysisTimeout) {
-          clearTimeout(this.analysisTimeout);
-        }
-        
-        this.analysisTimeout = window.setTimeout(() => {
-          this.analyzePage();
-        }, 1000);
-      }
-    });
+    console.log('✅ Observers setup complete - Analysis on page load only');
   }
 
   /**
