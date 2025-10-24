@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CognitiveSense Demo - Shopping Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+        }
+
+        .product-content {
+            padding: 20px;
+        }
+
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .product-description {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .pricing {
+            margin-bottom: 15px;
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 13px;
+            margin-right: 10px;
+        }
+
+        .current-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #e74c3c;
+        }
+
+        .discount-badge {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .urgency-text {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .scarcity-text {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #721c24;
+        }
+
+        .social-proof {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #0c5460;
+        }
+
+        .bundle-offer {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #155724;
+        }
+
+        .fomo-text {
+            background: #e2e3e5;
+            border-left: 4px solid #6c757d;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #383d41;
+        }
+
+        .dark-pattern {
+            background: #f5f5f5;
+            border-left: 4px solid #333;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .button:hover {
+            background: #764ba2;
+        }
+
+        .detector-legend {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .detector-legend h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .legend-item {
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .legend-item.urgency {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .legend-item.anchoring {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .legend-item.social {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+
+        .legend-item.bundling {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .legend-item.fomo {
+            background: #e2e3e5;
+            border-left-color: #6c757d;
+        }
+
+        .legend-item.dark {
+            background: #f5f5f5;
+            border-left-color: #333;
+        }
+
+        .legend-item strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .legend-item span {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #004085;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛍️ CognitiveSense Demo Store</h1>
+        <p>This page contains all 6 manipulation patterns for testing the extension</p>
+    </div>
+
+    <div class="container">
+        <div class="info-box">
+            💡 <strong>How to test:</strong> Open the CognitiveSense extension and click the badge to see all detected manipulation tactics on this page. Each product below contains different patterns.
+        </div>
+
+        <div class="products-grid">
+            <!-- Product 1: URGENCY DETECTOR -->
+            <div class="product-card">
+                <div class="product-image">⏰</div>
+                <div class="product-content">
+                    <div class="product-title">Premium Headphones</div>
+                    <div class="urgency-text">
+                        ⏱️ Sale ends in 2 hours 30 minutes!
+                    </div>
+                    <div class="urgency-text">
+                        🔴 Only 5 left in stock - hurry before it's gone!
+                    </div>
+                    <div class="pricing">
+                        <span class="original-price">$199.99</span>
+                        <span class="current-price">$99.99</span>
+                        <span class="discount-badge">50% OFF</span>
+                    </div>
+                    <div class="product-description">
+                        High-quality wireless headphones with noise cancellation. Limited time offer - don't miss out!
+                    </div>
+                    <button class="button">Buy Now Before It's Gone!</button>
+                </div>
+            </div>
+
+            <!-- Product 2: ANCHORING DETECTOR -->
+            <div class="product-card">
+                <div class="product-image">💰</div>
+                <div class="product-content">
+                    <div class="product-title">Smart Watch</div>
+                    <div class="pricing">
+                        <span class="original-price">$599.99</span>
+                        <span class="current-price">$149.99</span>
+                        <span class="discount-badge">75% DISCOUNT</span>
+                    </div>
+                    <div class="product-description">
+                        Advanced fitness tracking with heart rate monitor. Was $599.99, now just $149.99! Incredible value - compare with competitors at $500+
+                    </div>
+                    <div class="urgency-text">
+                        💳 Limited quantity at this price
+                    </div>
+                    <button class="button">Grab This Deal</button>
+                </div>
+            </div>
+
+            <!-- Product 3: SOCIAL PROOF DETECTOR -->
+            <div class="product-card">
+                <div class="product-image">⭐</div>
+                <div class="product-content">
+                    <div class="product-title">Wireless Charger</div>
+                    <div class="social-proof">
+                        ⭐ 4.9/5 stars from 50,000+ reviews
+                    </div>
+                    <div class="social-proof">
+                        👥 100,000+ people bought this last month
+                    </div>
+                    <div class="social-proof">
+                        🏆 #1 Best Seller in Electronics
+                    </div>
+                    <div class="pricing">
+                        <span class="current-price">$29.99</span>
+                    </div>
+                    <div class="product-description">
+                        Fast wireless charging for all devices. Join thousands of satisfied customers!
+                    </div>
+                    <button class="button">Join The Trend</button>
+                </div>
+            </div>
+
+            <!-- Product 4: BUNDLING DETECTOR -->
+            <div class="product-card">
+                <div class="product-image">📦</div>
+                <div class="product-content">
+                    <div class="product-title">Phone Bundle Pack</div>
+                    <div class="bundle-offer">
+                        📦 Bundle Deal: Phone + Case + Screen Protector + Charger
+                    </div>
+                    <div class="bundle-offer">
+                        ✅ Cannot be purchased separately - bundle only
+                    </div>
+                    <div class="pricing">
+                        <span class="original-price">$1,200</span>
+                        <span class="current-price">$799</span>
+                    </div>
+                    <div class="product-description">
+                        Complete phone package. All items must be purchased together. Additional shipping fees apply: +$15.99
+                    </div>
+                    <div class="urgency-text">
+                        ⚠️ Auto-renewal subscription included - cancel anytime
+                    </div>
+                    <button class="button">Buy Complete Bundle</button>
+                </div>
+            </div>
+
+            <!-- Product 5: FOMO DETECTOR -->
+            <div class="product-card">
+                <div class="product-image">🎁</div>
+                <div class="product-content">
+                    <div class="product-title">Exclusive Gaming Console</div>
+                    <div class="fomo-text">
+                        🎯 Exclusive offer - members only!
+                    </div>
+                    <div class="fomo-text">
+                        ⏳ Last chance - this is a once in a lifetime opportunity
+                    </div>
+                    <div class="fomo-text">
+                        👥 Everyone is buying this - don't be left out!
+                    </div>
+                    <div class="pricing">
+                        <span class="current-price">$499.99</span>
+                    </div>
+                    <div class="product-description">
+                        Limited edition gaming console. You'll regret missing this! Join thousands of others who already purchased.
+                    </div>
+                    <button class="button">Act Now - Limited Stock!</button>
+                </div>
+            </div>
+
+            <!-- Product 6: DARK PATTERN DETECTOR -->
+            <div class="product-card">
+                <div class="product-image">🎮</div>
+                <div class="product-content">
+                    <div class="product-title">Premium Subscription</div>
+                    <div class="dark-pattern">
+                        ⚠️ Free trial for 7 days - then auto-renewal at $9.99/month
+                    </div>
+                    <div class="dark-pattern">
+                        📋 To cancel: Go to Settings → Account → Subscriptions → Find CognitiveSense → Click Manage → Scroll down → Select Cancel
+                    </div>
+                    <div class="pricing">
+                        <span class="current-price">FREE for 7 days</span>
+                    </div>
+                    <div class="product-description">
+                        Premium features unlocked. By clicking "Start Free Trial" you agree to automatic billing. Cancellation is difficult but possible.
+                    </div>
+                    <div class="dark-pattern">
+                        ✓ I agree to terms and conditions (hidden in small text)
+                    </div>
+                    <button class="button">Start Free Trial</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detector Legend -->
+        <div class="detector-legend">
+            <h2>🔍 Detectors Demonstrated on This Page</h2>
+            <div class="legend-items">
+                <div class="legend-item urgency">
+                    <strong>1️⃣ Urgency Detector</strong>
+                    <span>Countdown timers, time pressure, scarcity claims</span>
+                </div>
+                <div class="legend-item anchoring">
+                    <strong>2️⃣ Anchoring Detector</strong>
+                    <span>Fake discounts, inflated original prices, artificial value</span>
+                </div>
+                <div class="legend-item social">
+                    <strong>3️⃣ Social Proof Detector</strong>
+                    <span>Fake reviews, unverified claims, suspicious ratings</span>
+                </div>
+                <div class="legend-item bundling">
+                    <strong>4️⃣ Bundling Detector</strong>
+                    <span>Forced bundles, hidden costs, subscription traps</span>
+                </div>
+                <div class="legend-item fomo">
+                    <strong>5️⃣ FOMO Detector</strong>
+                    <span>Exclusivity pressure, artificial scarcity, social pressure</span>
+                </div>
+                <div class="legend-item dark">
+                    <strong>6️⃣ Dark Pattern Detector</strong>
+                    <span>Deceptive UI, hidden options, difficult cancellation</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Log that the page loaded
+        console.log('🛍️ CognitiveSense Demo Shopping Page Loaded');
+        console.log('📊 This page contains all 6 manipulation patterns:');
+        console.log('1. Urgency (countdown timers, scarcity)');
+        console.log('2. Anchoring (fake discounts)');
+        console.log('3. Social Proof (fake reviews)');
+        console.log('4. Bundling (forced bundles, hidden costs)');
+        console.log('5. FOMO (exclusivity, artificial scarcity)');
+        console.log('6. Dark Patterns (deceptive UI, hidden options)');
+        console.log('✅ Open CognitiveSense extension to see detections!');
+    </script>
+</body>
+</html>
