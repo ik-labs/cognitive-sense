@@ -175,9 +175,24 @@ export function Panel() {
                 if (state.detections.length > 0) {
                   console.log(`🌐 Language changed to ${newLang}, re-translating detections...`);
                   
-                  // Re-translate each detection's warnings and tips
+                  // Re-translate each detection's content
                   const translatedDetections = await Promise.all(
                     state.detections.map(async (detection: any) => {
+                      const { multiLanguageManager: mlm } = await import('../utils/MultiLanguageManager');
+                      
+                      // Translate all text fields
+                      const title = newLang !== 'en' 
+                        ? await mlm.translateText(detection.title, newLang)
+                        : detection.title;
+                      
+                      const description = newLang !== 'en'
+                        ? await mlm.translateText(detection.description, newLang)
+                        : detection.description;
+                      
+                      const reasoning = newLang !== 'en'
+                        ? await mlm.translateText(detection.reasoning, newLang)
+                        : detection.reasoning;
+                      
                       const contentGen = new (await import('../ai/ContentGenerator')).ContentGenerator();
                       
                       const userFriendlyWarning = await contentGen.generateUserFriendlyWarning(detection);
@@ -185,6 +200,9 @@ export function Panel() {
                       
                       return {
                         ...detection,
+                        title,
+                        description,
+                        reasoning,
                         userFriendlyWarning,
                         educationalTip
                       };
@@ -197,7 +215,7 @@ export function Panel() {
                     detections: translatedDetections
                   }));
                   
-                  console.log(`✅ Detections re-translated to ${newLang}`);
+                  console.log(`✅ All detection content re-translated to ${newLang}`);
                 } else {
                   setState(prev => ({
                     ...prev,
