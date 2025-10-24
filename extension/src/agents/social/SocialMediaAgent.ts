@@ -57,19 +57,6 @@ export class SocialMediaAgent extends BaseAgent {
   }
 
   canHandle(context: PageContext): boolean {
-    const socialDomains = [
-      'facebook',
-      'twitter',
-      'x.com',
-      'instagram',
-      'tiktok',
-      'linkedin',
-      'reddit',
-      'threads',
-      'mastodon',
-      'bluesky'
-    ];
-
     const domain = context.domain.toLowerCase();
     
     console.log('SocialMediaAgent canHandle check:', {
@@ -78,7 +65,28 @@ export class SocialMediaAgent extends BaseAgent {
       url: context.url.href || context.url
     });
     
-    const isSocialPlatform = socialDomains.some(d => domain.includes(d));
+    // Explicit domain matching for all social platforms
+    const socialPlatforms = [
+      'facebook.com',
+      'twitter.com',
+      'x.com',
+      'instagram.com',
+      'tiktok.com',
+      'linkedin.com',
+      'reddit.com',
+      'threads.net',
+      'mastodon.social',
+      'bluesky.social',
+      'threads.app',
+      'instagram.com',
+      'youtube.com',
+      'tiktok.com'
+    ];
+
+    // Check for exact domain match or partial match
+    const isSocialPlatform = socialPlatforms.some(platform => {
+      return domain === platform || domain.endsWith('.' + platform) || domain.includes(platform);
+    });
 
     if (isSocialPlatform) {
       console.log(`✅ SocialMediaAgent: Detected as social media page: ${domain}`);
