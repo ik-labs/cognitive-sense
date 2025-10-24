@@ -17,9 +17,9 @@ import { AIEngineManager } from '../../ai/AIEngineManager';
 import { UrgencyDetector } from './detectors/UrgencyDetector';
 import { AnchoringDetector } from './detectors/AnchoringDetector';
 import { SocialProofDetector } from './detectors/SocialProofDetector';
-// import { FOMODetector } from './detectors/FOMODetector';
-// import { BundlingDetector } from './detectors/BundlingDetector';
-// import { DarkPatternDetector } from './detectors/DarkPatternDetector';
+import { FOMODetector } from './detectors/FOMODetector';
+import { BundlingDetector } from './detectors/BundlingDetector';
+import { DarkPatternDetector } from './detectors/DarkPatternDetector';
 
 export interface ShoppingDetector {
   name: string;
@@ -51,11 +51,10 @@ export class ShoppingPersuasionAgent extends BaseAgent {
     this.detectors = [
       new UrgencyDetector(),
       new AnchoringDetector(),
-      new SocialProofDetector()
-      // TODO: Add remaining detectors
-      // new FOMODetector(),
-      // new BundlingDetector(),
-      // new DarkPatternDetector()
+      new SocialProofDetector(),
+      new FOMODetector(),
+      new BundlingDetector(),
+      new DarkPatternDetector()
     ];
 
     console.log(`Shopping Agent initialized with ${this.detectors.length} detectors`);

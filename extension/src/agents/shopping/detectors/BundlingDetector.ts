@@ -1,24 +1,166 @@
-// /**
-//  * BundlingDetector - Detects forced bundling and hidden cost tactics
-//  */
+/**
+ * BundlingDetector - Detects forced bundling and hidden cost tactics
+ */
 
-// import { PageContext, Detection } from '../../base/types';
-// import { AIEngineManager } from '../../../ai/AIEngineManager';
-// import { Debug } from '../../../utils/Debug';
-// import { ShoppingDetector } from '../ShoppingAgent';
+import { PageContext, Detection } from '../../base/types';
+import { AIEngineManager } from '../../../ai/AIEngineManager';
+import { Debug } from '../../../utils/Debug';
+import { ShoppingDetector } from '../ShoppingAgent';
 
-// interface BundlingData {
-//   type: 'forced_bundle' | 'hidden_costs' | 'subscription_trap' | 'upsell_pressure' | 'addon_manipulation';
-//   text: string;
-//   items?: string[];
-//   costs?: {
-//     base: number;
-//     additional: number;
-//     total: number;
-//     currency: string;
-//   };
-//   element?: HTMLElement;
-// }
+export class BundlingDetector implements ShoppingDetector {
+  name = 'BundlingDetector';
+
+  async detect(context: PageContext, aiManager: AIEngineManager): Promise<Detection[]> {
+    const detections: Detection[] = [];
+    
+    try {
+      Debug.debug('🔍 BundlingDetector: Starting detection...');
+      
+      const pageText = context.content.text;
+      const bundlingPatterns = this.findBundlingPatterns(pageText);
+      
+      Debug.debug(`📊 Found ${bundlingPatterns.length} potential bundling tactics`);
+      
+      if (bundlingPatterns.length === 0) {
+        return detections;
+      }
+
+      // Analyze each bundling pattern
+      for (const pattern of bundlingPatterns.slice(0, 3)) { // Limit to 3
+        try {
+          const detection = await this.analyzeBundling(pattern, context, aiManager);
+          if (detection) {
+            detections.push(detection);
+            Debug.success(`✅ BundlingDetector: Found ${detection.type}`);
+          }
+        } catch (error) {
+          Debug.warning(`⚠️ Failed to analyze bundling pattern: ${error}`);
+        }
+      }
+
+      return detections;
+    } catch (error) {
+      Debug.error('BundlingDetector failed', error);
+      return detections;
+    }
+  }
+
+  private findBundlingPatterns(text: string): string[] {
+    const patterns: string[] = [];
+    const lines = text.split('\n').filter(line => line.trim().length > 0);
+
+    for (const line of lines) {
+      const lowerLine = line.toLowerCase();
+      
+      // Forced bundle patterns
+      if (/bundle|combo|package|set/.test(lowerLine) && 
+          /(?:buy|get|purchase).*(?:together|all)/.test(lowerLine)) {
+        patterns.push(line);
+        continue;
+      }
+      
+      // Hidden costs patterns
+      if (/(?:\+|plus|additional).*(?:shipping|fee|tax|charge|cost)/.test(lowerLine)) {
+        patterns.push(line);
+        continue;
+      }
+      
+      // Subscription trap patterns
+      if (/(?:auto|automatic).*(?:renew|bill|charge|subscription)/.test(lowerLine) ||
+          /free.*trial.*then/.test(lowerLine)) {
+        patterns.push(line);
+        continue;
+      }
+      
+      // Upsell pressure patterns
+      if (/(?:add|upgrade|complete).*(?:only|just).*\$/.test(lowerLine) ||
+          /(?:frequently|also).*bought.*together/.test(lowerLine)) {
+        patterns.push(line);
+        continue;
+      }
+      
+      // Add-on manipulation patterns
+      if (/(?:protection|warranty|insurance).*(?:plan|coverage)/.test(lowerLine) ||
+          /(?:highly|strongly).*recommended/.test(lowerLine)) {
+        patterns.push(line);
+      }
+    }
+
+    return [...new Set(patterns)]; // Remove duplicates
+  }
+
+  private async analyzeBundling(
+    content: string,
+    context: PageContext,
+    aiManager: AIEngineManager
+  ): Promise<Detection | null> {
+    try {
+      Debug.apiCall('Prompt', 'start');
+      
+      const prompt = `Analyze this shopping content for bundling/hidden cost manipulation tactics:
+"${content}"
+
+Rate the manipulation severity (0-10):
+- 0-3: Not manipulative
+- 4-6: Moderate bundling/upsell pressure
+- 7-10: Aggressive forced bundling or hidden costs
+
+Respond with: SCORE: [0-10], TYPE: [forced_bundle|hidden_costs|subscription_trap|upsell_pressure|addon_manipulation]`;
+
+      const result = await aiManager.prompt.detect({
+        prompt,
+        context: `Page: ${context.url.href}`
+      });
+
+      Debug.apiCall('Prompt', 'success');
+
+      // Parse score from response
+      const scoreMatch = result.text.match(/SCORE:\s*(\d+)/i);
+      const typeMatch = result.text.match(/TYPE:\s*(\w+)/i);
+      
+      const score = scoreMatch ? parseInt(scoreMatch[1]) : 5;
+      const type = typeMatch ? typeMatch[1].toLowerCase() : 'forced_bundle';
+
+      if (score < 4) return null;
+
+      const severity = score >= 7 ? 'high' : score >= 5 ? 'medium' : 'low';
+
+      return {
+        id: `bundling_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        agentKey: 'shopping_persuasion',
+        type: 'bundling',
+        score,
+        severity,
+        title: `⚠️ ${this.getTitleForType(type)} (${severity.toUpperCase()})`,
+        description: `Potential bundling or hidden cost tactic detected: ${content.substring(0, 100)}...`,
+        reasoning: result.text,
+        details: [
+          { label: 'Type', value: type },
+          { label: 'Severity', value: severity },
+          { label: 'Content', value: content.substring(0, 80) + (content.length > 80 ? '...' : '') }
+        ],
+        actions: [],
+        confidence: 0.8,
+        timestamp: new Date(),
+        pageUrl: context.url.href
+      };
+    } catch (error) {
+      Debug.error('Failed to analyze bundling', error);
+      return null;
+    }
+  }
+
+  private getTitleForType(type: string): string {
+    const titles: Record<string, string> = {
+      'forced_bundle': 'Forced Bundling',
+      'hidden_costs': 'Hidden Costs',
+      'subscription_trap': 'Subscription Trap',
+      'upsell_pressure': 'Upsell Pressure',
+      'addon_manipulation': 'Add-on Manipulation'
+    };
+    return titles[type] || 'Bundling Tactic';
+  }
+}
 
 // export class BundlingDetector implements ShoppingDetector {
 //   name = 'BundlingDetector';
