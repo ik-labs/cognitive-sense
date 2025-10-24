@@ -12,13 +12,13 @@ import {
   OverlaySpec 
 } from '../base/types';
 import { AIEngineManager } from '../../ai/AIEngineManager';
-// Import detectors (will be created)
-// import { MisinformationDetector } from './detectors/MisinformationDetector';
-// import { EmotionalManipulationDetector } from './detectors/EmotionalManipulationDetector';
-// import { EchoChamberDetector } from './detectors/EchoChamberDetector';
-// import { FakeAccountDetector } from './detectors/FakeAccountDetector';
-// import { ToxicContentDetector } from './detectors/ToxicContentDetector';
-// import { PoliticalManipulationDetector } from './detectors/PoliticalManipulationDetector';
+// Import detectors
+import { MisinformationDetector } from './detectors/MisinformationDetector';
+import { EmotionalManipulationDetector } from './detectors/EmotionalManipulationDetector';
+import { EchoChamberDetector } from './detectors/EchoChamberDetector';
+import { FakeAccountDetector } from './detectors/FakeAccountDetector';
+import { ToxicContentDetector } from './detectors/ToxicContentDetector';
+import { PoliticalManipulationDetector } from './detectors/PoliticalManipulationDetector';
 
 export interface SocialDetector {
   name: string;
@@ -38,16 +38,15 @@ export class SocialMediaAgent extends BaseAgent {
   protected async onInitialize(): Promise<void> {
     console.log('Initializing Social Media Agent...');
     
-    // Initialize detectors (will be created)
-    this.detectors = [];
-    // this.detectors = [
-    //   new MisinformationDetector(),
-    //   new EmotionalManipulationDetector(),
-    //   new EchoChamberDetector(),
-    //   new FakeAccountDetector(),
-    //   new ToxicContentDetector(),
-    //   new PoliticalManipulationDetector()
-    // ];
+    // Initialize detectors
+    this.detectors = [
+      new MisinformationDetector(),
+      new EmotionalManipulationDetector(),
+      new EchoChamberDetector(),
+      new FakeAccountDetector(),
+      new ToxicContentDetector(),
+      new PoliticalManipulationDetector()
+    ];
 
     console.log(`Social Agent initialized with ${this.detectors.length} detectors`);
   }

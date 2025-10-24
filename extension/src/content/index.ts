@@ -3,6 +3,7 @@
 import { AgentRegistry } from '../agents/base/AgentRegistry';
 import { AIEngineManager } from '../ai/AIEngineManager';
 import { ShoppingPersuasionAgent } from '../agents/shopping/ShoppingAgent';
+import { SocialMediaAgent } from '../agents/social/SocialMediaAgent';
 import { OverlayManager } from '../ui/OverlayManager';
 import { PageContextBuilder } from '../core/PageContext';
 import { LocalStorageManager } from '../storage/LocalStorage';
@@ -33,9 +34,10 @@ class ContentScript {
       console.log('Initializing AI engines...');
       await this.aiManager.initialize();
       
-      // Register Shopping Agent in content script context
-      console.log('Registering Shopping Agent...');
+      // Register agents in content script context
+      console.log('Registering agents...');
       this.registry.register(new ShoppingPersuasionAgent());
+      this.registry.register(new SocialMediaAgent());
       
       // Initialize agent registry
       await this.registry.initialize();
