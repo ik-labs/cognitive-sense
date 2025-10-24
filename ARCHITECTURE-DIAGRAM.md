@@ -130,7 +130,7 @@ graph TB
 
 ---
 
-## 🔄 Data Flow Diagram
+## Data Flow Diagram
 
 ```mermaid
 graph LR
@@ -202,7 +202,7 @@ graph LR
 
 ---
 
-## 🎯 Agent Decision Tree
+## Agent Decision Tree
 
 ```mermaid
 graph TD
@@ -234,7 +234,7 @@ graph TD
 
 ---
 
-## 🔌 Chrome AI APIs Integration
+## Chrome AI APIs Integration
 
 ```mermaid
 graph TB
@@ -291,7 +291,7 @@ graph TB
 
 ---
 
-## 📊 Multi-Language Pipeline
+## Multi-Language Pipeline
 
 ```mermaid
 graph LR
@@ -343,7 +343,7 @@ graph LR
 
 ---
 
-## 🔄 Scroll Detection Flow (Social Media)
+## Scroll Detection Flow - Social Media
 
 ```mermaid
 graph TD
@@ -372,7 +372,7 @@ graph TD
 
 ---
 
-## 📦 Component Hierarchy
+## Component Hierarchy
 
 ```mermaid
 graph TB
@@ -417,7 +417,7 @@ graph TB
 
 ---
 
-## 🎯 Key Architecture Principles
+## Key Architecture Principles
 
 ### 1. **Agent-Based Design**
 - Modular agents for different page types
@@ -450,7 +450,7 @@ graph TB
 
 ---
 
-## 📈 Scalability
+## Scalability
 
 ```mermaid
 graph LR
@@ -472,7 +472,7 @@ graph LR
 
 ---
 
-## 🚀 Deployment Architecture
+## Deployment Architecture
 
 ```mermaid
 graph TB
