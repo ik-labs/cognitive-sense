@@ -134,6 +134,7 @@ async function initializeDefaultSettings(): Promise<void> {
     const defaultSettings = {
       agents: {
         shopping_persuasion: true,
+        social_media: false,   // Phase 2: Social media agent
         news_bias: false,
         social_pulse: false
       },

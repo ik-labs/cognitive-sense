@@ -1,6 +1,6 @@
 // Core types for the agent framework
 
-export type AgentKey = 'shopping_persuasion' | 'news_bias' | 'social_pulse';
+export type AgentKey = 'shopping_persuasion' | 'social_media' | 'news_bias' | 'social_pulse';
 
 export interface PageContext {
   // Page Identity
