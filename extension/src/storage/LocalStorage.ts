@@ -87,7 +87,7 @@ export class LocalStorageManager {
     return {
       agents: {
         shopping_persuasion: true,
-        social_media: false,   // Phase 2: Social media agent
+        social_media: true,    // ✅ Social media agent enabled
         news_bias: false,      // Future agents disabled by default
         social_pulse: false
       },
