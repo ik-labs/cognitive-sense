@@ -29,6 +29,9 @@ export function Panel() {
       // Hash the URL to get storage key
       const urlHash = hashUrl(currentUrl);
       
+      console.log(`🔍 Panel loading for URL: ${currentUrl}`);
+      console.log(`🔑 URL hash: ${urlHash}`);
+      
       // Load detection data from storage (per URL)
       const result = await chrome.storage.local.get([
         `detections_${urlHash}`,
@@ -40,6 +43,9 @@ export function Panel() {
       // Try to get URL-specific data first, fall back to latest
       const detections = result[`detections_${urlHash}`] || result.latestDetections || [];
       const overallScore = result[`score_${urlHash}`] || result.latestScore || 0;
+
+      console.log(`📊 Panel loaded: ${detections.length} detections, score: ${overallScore}`);
+      console.log(`✅ Using ${result[`detections_${urlHash}`] ? 'URL-specific' : 'fallback'} data`);
 
       setState({
         loading: false,

@@ -120,7 +120,7 @@ class ContentScript {
       
       // Save to storage for side panel (per URL)
       const urlHash = this.hashUrl(window.location.href);
-      await chrome.storage.local.set({
+      const storageData = {
         [`detections_${urlHash}`]: allDetections,
         [`score_${urlHash}`]: overallScore,
         [`timestamp_${urlHash}`]: new Date().toISOString(),
@@ -129,7 +129,13 @@ class ContentScript {
         latestScore: overallScore,
         latestUrl: window.location.href,
         latestTimestamp: new Date().toISOString()
-      });
+      };
+      
+      await chrome.storage.local.set(storageData);
+      
+      console.log(`💾 Saved detections for URL hash: ${urlHash}`);
+      console.log(`📍 URL: ${window.location.href}`);
+      console.log(`🔍 Detections stored: ${allDetections.length}`);
 
       // Send results to service worker and side panel
       chrome.runtime.sendMessage({
