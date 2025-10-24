@@ -63,12 +63,13 @@ export function Panel() {
         'latestScore'
       ]);
       
-      // Try to get URL-specific data first, fall back to latest
-      const detections = result[`detections_${urlHash}`] || result.latestDetections || [];
-      const overallScore = result[`score_${urlHash}`] || result.latestScore || 0;
+      // Try to get URL-specific data ONLY (don't fall back to latest)
+      // This ensures each tab shows its own data, not data from other tabs
+      const detections = result[`detections_${urlHash}`] || [];
+      const overallScore = result[`score_${urlHash}`] || 0;
 
       console.log(`📊 Panel loaded: ${detections.length} detections, score: ${overallScore}`);
-      console.log(`✅ Using ${result[`detections_${urlHash}`] ? 'URL-specific' : 'fallback'} data`);
+      console.log(`✅ Using URL-specific data for: ${currentUrl}`);
 
       // Detect page language
       const pageText = detections.map((d: any) => d.description).join(' ');
