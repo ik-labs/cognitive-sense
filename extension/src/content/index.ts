@@ -116,6 +116,10 @@ class ContentScript {
         
         // Render overlays for significant detections
         await this.renderOverlays(allDetections, activeAgents);
+      } else {
+        // No detections found - clear loading indicator
+        this.overlayManager.clear();
+        console.log('✅ Page is clean - no manipulation tactics detected');
       }
       
       // Save to storage for side panel (per URL)
