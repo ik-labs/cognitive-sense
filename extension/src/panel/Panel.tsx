@@ -26,10 +26,20 @@ export function Panel() {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       const currentUrl = tab.url || '';
 
-      // Load detection data from storage
-      const result = await chrome.storage.local.get(['latestDetections', 'latestScore']);
-      const detections = result.latestDetections || [];
-      const overallScore = result.latestScore || 0;
+      // Hash the URL to get storage key
+      const urlHash = hashUrl(currentUrl);
+      
+      // Load detection data from storage (per URL)
+      const result = await chrome.storage.local.get([
+        `detections_${urlHash}`,
+        `score_${urlHash}`,
+        'latestDetections',
+        'latestScore'
+      ]);
+      
+      // Try to get URL-specific data first, fall back to latest
+      const detections = result[`detections_${urlHash}`] || result.latestDetections || [];
+      const overallScore = result[`score_${urlHash}`] || result.latestScore || 0;
 
       setState({
         loading: false,
@@ -44,6 +54,27 @@ export function Panel() {
         loading: false,
         error: 'Failed to load panel'
       }));
+    }
+  };
+
+  /**
+   * Simple hash function for URL (same as content script)
+   */
+  const hashUrl = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      const key = `${urlObj.hostname}${urlObj.pathname}`;
+      
+      let hash = 0;
+      for (let i = 0; i < key.length; i++) {
+        const char = key.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      
+      return Math.abs(hash).toString(36);
+    } catch {
+      return 'unknown';
     }
   };
 

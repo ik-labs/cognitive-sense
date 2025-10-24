@@ -119,8 +119,13 @@ class ContentScript {
         await this.renderOverlays(allDetections, activeAgents);
       }
       
-      // Save to storage for side panel
+      // Save to storage for side panel (per URL)
+      const urlHash = this.hashUrl(window.location.href);
       await chrome.storage.local.set({
+        [`detections_${urlHash}`]: allDetections,
+        [`score_${urlHash}`]: overallScore,
+        [`timestamp_${urlHash}`]: new Date().toISOString(),
+        // Also keep latest for backward compatibility
         latestDetections: allDetections,
         latestScore: overallScore,
         latestUrl: window.location.href,
@@ -202,6 +207,25 @@ class ContentScript {
         }, 1000);
       }
     });
+  }
+
+  /**
+   * Simple hash function for URL
+   */
+  private hashUrl(url: string): string {
+    // Extract domain + path (without query params and fragments)
+    const urlObj = new URL(url);
+    const key = `${urlObj.hostname}${urlObj.pathname}`;
+    
+    // Simple hash
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      const char = key.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    
+    return Math.abs(hash).toString(36);
   }
 }
 
