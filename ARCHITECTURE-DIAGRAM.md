@@ -37,7 +37,7 @@ graph TB
         
         subgraph "Agent System"
             subgraph "Shopping Agent"
-                SA["ShoppingPersuasionAgent"]
+                ShopAgent["ShoppingPersuasionAgent"]
                 UD["UrgencyDetector"]
                 AD["AnchoringDetector"]
                 SP["SocialProofDetector"]
@@ -45,16 +45,16 @@ graph TB
                 BD["BundlingDetector"]
                 DP["DarkPatternDetector"]
                 
-                SA -->|contains| UD
-                SA -->|contains| AD
-                SA -->|contains| SP
-                SA -->|contains| FD
-                SA -->|contains| BD
-                SA -->|contains| DP
+                ShopAgent -->|contains| UD
+                ShopAgent -->|contains| AD
+                ShopAgent -->|contains| SP
+                ShopAgent -->|contains| FD
+                ShopAgent -->|contains| BD
+                ShopAgent -->|contains| DP
             end
             
             subgraph "Social Media Agent"
-                SMA["SocialMediaAgent"]
+                SocialAgent["SocialMediaAgent"]
                 MD["MisinformationDetector"]
                 EMD["EmotionalManipulationDetector"]
                 ECD["EchoChamberDetector"]
@@ -62,16 +62,16 @@ graph TB
                 TCD["ToxicContentDetector"]
                 PMD["PoliticalManipulationDetector"]
                 
-                SMA -->|contains| MD
-                SMA -->|contains| EMD
-                SMA -->|contains| ECD
-                SMA -->|contains| FAD
-                SMA -->|contains| TCD
-                SMA -->|contains| PMD
+                SocialAgent -->|contains| MD
+                SocialAgent -->|contains| EMD
+                SocialAgent -->|contains| ECD
+                SocialAgent -->|contains| FAD
+                SocialAgent -->|contains| TCD
+                SocialAgent -->|contains| PMD
             end
             
-            AR -->|registers| SA
-            AR -->|registers| SMA
+            AR -->|registers| ShopAgent
+            AR -->|registers| SocialAgent
         end
         
         subgraph "UI Layer"
@@ -119,8 +119,8 @@ graph TB
     style SW fill:#e1f5ff
     style CS fill:#f3e5f5
     style AEM fill:#fff3e0
-    style SA fill:#e8f5e9
-    style SMA fill:#fce4ec
+    style ShopAgent fill:#e8f5e9
+    style SocialAgent fill:#fce4ec
     style Panel fill:#f1f8e9
     style PA fill:#ffe0b2
     style WA fill:#ffe0b2
