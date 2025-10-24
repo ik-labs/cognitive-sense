@@ -3,6 +3,7 @@
 import { AgentRegistry } from '@/agents/base/AgentRegistry';
 import { LocalStorageManager } from '@/storage/LocalStorage';
 import { ShoppingPersuasionAgent } from '@/agents/shopping/ShoppingAgent';
+// Note: MultiLanguageManager is only used in content script and panel, not in service worker
 
 console.log('CognitiveSense Service Worker starting...');
 
