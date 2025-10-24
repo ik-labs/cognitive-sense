@@ -76,7 +76,23 @@ export class LocalStorageManager {
   async getUserSettings(): Promise<UserSettings> {
     try {
       const result = await chrome.storage.local.get('userSettings');
-      return result.userSettings || this.getDefaultUserSettings();
+      const stored = result.userSettings;
+      
+      if (!stored) {
+        return this.getDefaultUserSettings();
+      }
+      
+      // Merge stored settings with defaults to ensure new agents are included
+      const defaults = this.getDefaultUserSettings();
+      return {
+        agents: {
+          ...defaults.agents,
+          ...stored.agents
+        },
+        sensitivity: stored.sensitivity ?? defaults.sensitivity,
+        hybridEnabled: stored.hybridEnabled ?? defaults.hybridEnabled,
+        domains: stored.domains ?? defaults.domains
+      };
     } catch (error) {
       console.error('Failed to get user settings:', error);
       return this.getDefaultUserSettings();
