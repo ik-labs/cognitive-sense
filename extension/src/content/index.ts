@@ -92,6 +92,8 @@ class ContentScript {
       // Run detections in parallel
       const detectionPromises = activeAgents.map(async (agent) => {
         try {
+          // Attach aiManager to context for agents to use
+          (context as any).aiManager = this.aiManager;
           const detections = await agent.detect(context);
           return { agent, detections };
         } catch (error) {
