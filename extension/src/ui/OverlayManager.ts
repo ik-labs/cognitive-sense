@@ -10,6 +10,37 @@ export class OverlayManager {
   private floatingBadge: HTMLElement | null = null;
 
   /**
+   * Show loading indicator while detection is in progress
+   */
+  showLoading(): void {
+    // Remove existing badge if any
+    const existing = document.getElementById('cognitive-sense-badge');
+    if (existing) {
+      existing.remove();
+    }
+
+    const badge = document.createElement('div');
+    badge.id = 'cognitive-sense-badge';
+    badge.className = 'cognitive-sense-floating-badge cs-loading';
+    
+    badge.innerHTML = `
+      <div class="cs-badge-content">
+        <div class="cs-badge-icon cs-spinner">🛡️</div>
+        <div class="cs-badge-info">
+          <div class="cs-badge-title">CognitiveSense</div>
+          <div class="cs-badge-stats">
+            <span class="cs-loading-text">Analyzing page...</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(badge);
+    this.floatingBadge = badge;
+    this.injectStyles();
+  }
+
+  /**
    * Render all detections on the page
    */
   async render(detections: Detection[]): Promise<void> {
@@ -529,8 +560,27 @@ export class OverlayManager {
         }
       }
 
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
       .cognitive-sense-floating-badge {
         animation: slideIn 0.3s ease-out;
+      }
+
+      .cs-loading .cs-spinner {
+        animation: spin 2s linear infinite;
+      }
+
+      .cs-loading-text {
+        color: #6b7280;
+        font-size: 12px;
+        font-weight: 500;
       }
 
       /* Mobile responsive */

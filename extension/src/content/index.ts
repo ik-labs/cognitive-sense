@@ -64,6 +64,9 @@ class ContentScript {
     
     this.isAnalyzing = true;
     
+    // Show loading indicator
+    this.overlayManager.showLoading();
+    
     try {
       console.log('Starting page analysis...');
       const startTime = performance.now();
