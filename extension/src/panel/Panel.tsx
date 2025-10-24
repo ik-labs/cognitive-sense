@@ -315,6 +315,34 @@ export function Panel() {
           )}
         </section>
 
+        {/* Detector Breakdown */}
+        {state.detections.length > 0 && (
+          <section className="cs-mb-6">
+            <h2 className="cs-text-sm cs-font-medium cs-text-gray-700 cs-mb-3">Detector Breakdown</h2>
+            <div className="cs-grid cs-grid-cols-2 cs-gap-2">
+              {['urgency', 'anchoring', 'social_proof', 'fomo', 'bundling', 'dark_pattern'].map(type => {
+                const count = state.detections.filter((d: any) => d.type === type).length;
+                const labels: Record<string, string> = {
+                  urgency: '⏰ Urgency',
+                  anchoring: '💰 Anchoring',
+                  social_proof: '⭐ Social Proof',
+                  fomo: '🎁 FOMO',
+                  bundling: '📦 Bundling',
+                  dark_pattern: '🎮 Dark Pattern'
+                };
+                return (
+                  <div key={type} className="cs-bg-gray-50 cs-rounded-lg cs-p-3 cs-text-center">
+                    <div className="cs-text-xs cs-font-medium cs-text-gray-700">{labels[type]}</div>
+                    <div className={`cs-text-lg cs-font-bold ${count > 0 ? 'cs-text-orange-600' : 'cs-text-gray-400'}`}>
+                      {count}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* Detections List */}
         {state.detections.length > 0 && (
           <section className="cs-space-y-3">
