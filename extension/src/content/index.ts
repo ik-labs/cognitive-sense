@@ -156,9 +156,17 @@ class ContentScript {
       const totalTime = performance.now() - startTime;
       console.log(`Page analysis completed in ${totalTime}ms. Found ${allDetections.length} detections.`);
     } catch (error) {
-      console.error('Page analysis failed:', error);
+      // Handle extension context invalidated error gracefully
+      if (error instanceof Error && error.message.includes('Extension context invalidated')) {
+        console.warn('⚠️ Extension context invalidated - extension was reloaded');
+        console.log('💡 Tip: Reload the page to re-analyze');
+      } else {
+        console.error('Page analysis failed:', error);
+      }
     } finally {
       this.isAnalyzing = false;
+      // Always clear loading indicator on error
+      this.overlayManager.clear();
     }
   }
   

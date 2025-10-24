@@ -4,7 +4,7 @@
 
 // import { PageContext, Detection } from '../../base/types';
 // import { AIEngineManager } from '../../../ai/AIEngineManager';
-// import { PromptEngine } from '../../../ai/PromptEngine';
+// import { Debug } from '../../../utils/Debug';
 // import { ShoppingDetector } from '../ShoppingAgent';
 
 // interface BundlingData {

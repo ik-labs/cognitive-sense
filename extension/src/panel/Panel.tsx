@@ -201,10 +201,14 @@ export function Panel() {
                           ? await mlm.translateText(detection.reasoning, newLang)
                           : detection.reasoning;
                         
-                        const contentGen = new (await import('../ai/ContentGenerator')).ContentGenerator();
+                        // Translate existing warnings and tips instead of regenerating
+                        const userFriendlyWarning = detection.userFriendlyWarning && newLang !== 'en'
+                          ? await mlm.translateText(detection.userFriendlyWarning, newLang)
+                          : detection.userFriendlyWarning;
                         
-                        const userFriendlyWarning = await contentGen.generateUserFriendlyWarning(detection);
-                        const educationalTip = await contentGen.generateEducationalTip(detection);
+                        const educationalTip = detection.educationalTip && newLang !== 'en'
+                          ? await mlm.translateText(detection.educationalTip, newLang)
+                          : detection.educationalTip;
                         
                         return {
                           ...detection,
