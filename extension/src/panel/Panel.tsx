@@ -74,13 +74,15 @@ export function Panel() {
       const pageText = detections.map((d: any) => d.description).join(' ');
       const detectedLang = multiLanguageManager.detectPageLanguage(pageText);
 
+      // Reset to English for each new page (but keep preference saved for future use)
       setState({
         loading: false,
         currentUrl,
         detections,
         overallScore,
         detectedLanguage: detectedLang,
-        preferredLanguage: multiLanguageManager.getPreferredLanguage()
+        preferredLanguage: 'en', // Always start with English for new page
+        isTranslating: false
       });
     } catch (error) {
       console.error('Failed to initialize panel:', error);
