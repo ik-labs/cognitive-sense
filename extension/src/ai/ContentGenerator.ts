@@ -1,9 +1,11 @@
 /**
  * ContentGenerator - Uses Writer API to generate user-friendly content
+ * Supports multi-language translation via Translator API
  */
 
 import { AIEngineManager } from './AIEngineManager';
 import { Detection } from '../agents/base/types';
+import { multiLanguageManager } from '../utils/MultiLanguageManager';
 
 export class ContentGenerator {
   private aiManager: AIEngineManager;
@@ -26,7 +28,15 @@ export class ContentGenerator {
       });
 
       console.log(`✍️ Generated user-friendly warning for ${detection.type}`);
-      return response.content;
+      let content = response.content;
+
+      // Translate if needed
+      const targetLang = multiLanguageManager.getPreferredLanguage();
+      if (targetLang !== 'en') {
+        content = await multiLanguageManager.translateText(content, targetLang);
+      }
+
+      return content;
     } catch (error) {
       console.error('Failed to generate user-friendly warning:', error);
       return this.getFallbackWarning(detection);
@@ -47,7 +57,15 @@ export class ContentGenerator {
       });
 
       console.log(`💡 Generated educational tip for ${detection.type}`);
-      return response.content;
+      let content = response.content;
+
+      // Translate if needed
+      const targetLang = multiLanguageManager.getPreferredLanguage();
+      if (targetLang !== 'en') {
+        content = await multiLanguageManager.translateText(content, targetLang);
+      }
+
+      return content;
     } catch (error) {
       console.error('Failed to generate educational tip:', error);
       return this.getFallbackTip(detection);
