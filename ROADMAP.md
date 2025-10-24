@@ -385,6 +385,71 @@ By end of 2026, CognitiveSense will be:
 
 ---
 
+## 🚀 Phase 4: SocialSense - Social Media Protection (Post-Hackathon)
+
+### Timeline: 2-3 months after hackathon
+
+### **Objective**
+Extend CognitiveSense to social media platforms (Facebook, Twitter, Instagram, TikTok, LinkedIn, Reddit) to detect misinformation, emotional manipulation, echo chambers, and toxic content.
+
+### **6 New Detectors**
+1. **MisinformationDetector** - Fact vs. fiction
+2. **EmotionalManipulationDetector** - Emotional triggers
+3. **EchoChamberDetector** - Filter bubble detection
+4. **FakeAccountDetector** - Bot & fake account detection
+5. **ToxicContentDetector** - Hate speech & harassment
+6. **PoliticalManipulationDetector** - Bias & propaganda
+
+### **Chrome AI APIs Usage**
+- **Prompt API** - Content classification & intent analysis
+- **Summarizer API** - Extract key claims from posts
+- **Proofreader API** - Detect bot-generated content
+- **Writer API** - Generate fact-check suggestions
+- **Translator API** - Multi-language misinformation detection
+- **Rewriter API** - Show alternative perspectives
+
+### **Platforms Supported**
+- Facebook
+- Twitter/X
+- Instagram
+- TikTok
+- LinkedIn
+- Reddit
+
+### **Key Features**
+- Real-time misinformation detection
+- Emotional manipulation scoring
+- Echo chamber analysis
+- Fake account identification
+- Toxicity detection
+- Perspective diversity
+- Community fact-checking
+- Trend analysis dashboard
+
+### **See**: [SOCIALENSE-ROADMAP.md](SOCIALENSE-ROADMAP.md) for comprehensive details
+
+---
+
+## 🎯 Long-Term Vision (Year 2+)
+
+### Phase 5: NewsGuard Integration
+- Partner with fact-checking organizations
+- Real-time fact-check database
+- Journalist collaboration
+
+### Phase 6: AI Safety
+- Detect AI-generated content
+- Identify deepfakes
+- Spot synthetic media
+
+### Phase 7: Global Expansion
+- 50+ languages
+- 100+ platforms
+- Community marketplace
+- Mobile apps
+
+---
+
 **Last Updated**: October 24, 2025  
-**Status**: Ready for Phase 2 Implementation  
+**Status**: MVP Complete, Phase 2-4 Roadmapped  
 **Next Review**: After hackathon submission
