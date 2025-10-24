@@ -167,12 +167,43 @@ export function Panel() {
           <div className="cs-flex cs-items-center cs-gap-2">
             <select
               value={state.preferredLanguage}
-              onChange={(e) => {
-                multiLanguageManager.setPreferredLanguage(e.target.value);
-                setState(prev => ({
-                  ...prev,
-                  preferredLanguage: e.target.value
-                }));
+              onChange={async (e) => {
+                const newLang = e.target.value;
+                multiLanguageManager.setPreferredLanguage(newLang);
+                
+                // Re-translate all detections
+                if (state.detections.length > 0) {
+                  console.log(`🌐 Language changed to ${newLang}, re-translating detections...`);
+                  
+                  // Re-translate each detection's warnings and tips
+                  const translatedDetections = await Promise.all(
+                    state.detections.map(async (detection: any) => {
+                      const contentGen = new (await import('../ai/ContentGenerator')).ContentGenerator();
+                      
+                      const userFriendlyWarning = await contentGen.generateUserFriendlyWarning(detection);
+                      const educationalTip = await contentGen.generateEducationalTip(detection);
+                      
+                      return {
+                        ...detection,
+                        userFriendlyWarning,
+                        educationalTip
+                      };
+                    })
+                  );
+                  
+                  setState(prev => ({
+                    ...prev,
+                    preferredLanguage: newLang,
+                    detections: translatedDetections
+                  }));
+                  
+                  console.log(`✅ Detections re-translated to ${newLang}`);
+                } else {
+                  setState(prev => ({
+                    ...prev,
+                    preferredLanguage: newLang
+                  }));
+                }
               }}
               className="cs-text-xs cs-px-2 cs-py-1 cs-border cs-border-gray-300 cs-rounded cs-bg-white cs-cursor-pointer"
               title="Select language for translations"
