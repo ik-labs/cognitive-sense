@@ -213,12 +213,25 @@ export class AnchoringDetector implements ShoppingDetector {
 
   private deduplicatePrices(prices: PriceInfo[]): PriceInfo[] {
     const seen = new Set<string>();
-    return prices.filter(price => {
+    const filtered = prices.filter(price => {
+      // Deduplicate by exact price match
       const key = `${price.current}-${price.original}-${price.currency}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
+
+    // Also deduplicate by discount percentage (avoid multiple items with same discount)
+    const discountSeen = new Set<number>();
+    return filtered.filter(price => {
+      const discount = price.discountPercent || 0;
+      if (discountSeen.has(discount)) {
+        console.log(`🔄 Skipping duplicate discount: ${discount}%`);
+        return false;
+      }
+      discountSeen.add(discount);
+      return true;
+    }).slice(0, 2); // Limit to 2 anchoring detections max
   }
 
   private async analyzePriceAnchoring(

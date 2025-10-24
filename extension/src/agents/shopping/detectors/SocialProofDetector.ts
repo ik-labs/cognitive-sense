@@ -27,14 +27,18 @@ export class SocialProofDetector implements ShoppingDetector {
     
     try {
       // Extract social proof content
-      const socialProofData = this.extractSocialProofData(context);
+      let socialProofData = this.extractSocialProofData(context);
       
       if (socialProofData.length === 0) {
         return detections;
       }
 
-      // Analyze each social proof claim
-      for (const data of socialProofData) {
+      // Deduplicate social proof data
+      socialProofData = this.deduplicateSocialProof(socialProofData);
+      console.log(`📊 Social Proof: Analyzing ${socialProofData.length} unique claims`);
+
+      // Analyze each social proof claim (limit to 2)
+      for (const data of socialProofData.slice(0, 2)) {
         const detection = await this.analyzeSocialProof(data, context, aiManager);
         if (detection) {
           detections.push(detection);
@@ -85,6 +89,33 @@ export class SocialProofDetector implements ShoppingDetector {
     });
 
     return data.slice(0, 15); // Limit to prevent overload
+  }
+
+  private deduplicateSocialProof(data: SocialProofData[]): SocialProofData[] {
+    const seen = new Set<string>();
+    const filtered = data.filter(item => {
+      // Deduplicate by type and normalized text
+      const normalized = item.text.toLowerCase().replace(/\s+/g, ' ').substring(0, 100);
+      const key = `${item.type}:${normalized}`;
+      
+      if (seen.has(key)) {
+        console.log(`🔄 Skipping duplicate social proof: ${item.type}`);
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+
+    // Also deduplicate by type (only 1 of each type)
+    const typeSeen = new Set<string>();
+    return filtered.filter(item => {
+      if (typeSeen.has(item.type)) {
+        console.log(`🔄 Skipping duplicate type: ${item.type}`);
+        return false;
+      }
+      typeSeen.add(item.type);
+      return true;
+    });
   }
 
   private extractReviewData(line: string, _lowerLine: string): SocialProofData | null {

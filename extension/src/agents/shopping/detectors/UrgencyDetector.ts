@@ -26,16 +26,16 @@ export class UrgencyDetector implements ShoppingDetector {
       const typesSeen = new Set<string>();
       
       for (const content of urgencyContent) {
-        if (!typesSeen.has(content.type) && topContent.length < 3) {
+        if (!typesSeen.has(content.type) && topContent.length < 2) {
           topContent.push(content);
           typesSeen.add(content.type);
         }
       }
       
-      // If we have less than 3, add more (but avoid duplicates)
-      if (topContent.length < 3) {
+      // If we have less than 2, add more (but avoid duplicates)
+      if (topContent.length < 2) {
         for (const content of urgencyContent) {
-          if (topContent.length >= 3) break;
+          if (topContent.length >= 2) break;
           if (!topContent.includes(content)) {
             topContent.push(content);
           }
@@ -122,17 +122,35 @@ export class UrgencyDetector implements ShoppingDetector {
       if (text.includes('AUI_TEMPLATE')) return false; // Config data
       if (text.includes('weblab')) return false; // Internal data
       
-      // Deduplicate by text content
-      const key = text.substring(0, 100); // Use first 100 chars as key
-      if (seen.has(key)) {
+      // Deduplicate by normalized text content (case-insensitive, remove extra spaces)
+      const normalized = text.toLowerCase().replace(/\s+/g, ' ').substring(0, 150);
+      if (seen.has(normalized)) {
+        console.log(`🔄 Skipping duplicate: "${text.substring(0, 50)}..."`);
         return false;
       }
-      seen.add(key);
+      seen.add(normalized);
       return true;
     });
     
     console.log(`📊 After filtering and deduplication: ${filtered.length} unique elements`);
-    return filtered.slice(0, 10); // Limit to prevent overload
+    
+    // Further deduplicate by semantic similarity (same type + similar text)
+    const semanticSeen = new Set<string>();
+    const semanticFiltered = filtered.filter(item => {
+      // Create a semantic key based on type and first keywords
+      const words = item.text.toLowerCase().split(/\s+/).slice(0, 3).join(' ');
+      const semanticKey = `${item.type}:${words}`;
+      
+      if (semanticSeen.has(semanticKey)) {
+        console.log(`🔄 Skipping semantically similar: "${item.text.substring(0, 50)}..."`);
+        return false;
+      }
+      semanticSeen.add(semanticKey);
+      return true;
+    });
+    
+    console.log(`📊 After semantic deduplication: ${semanticFiltered.length} unique elements`);
+    return semanticFiltered.slice(0, 10); // Limit to prevent overload
   }
 
   private hasScarcityPattern(text: string): boolean {
