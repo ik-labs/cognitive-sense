@@ -227,24 +227,42 @@ export function Panel() {
                 </p>
                 {detection.reasoning && (
                   <div className="cs-bg-blue-50 cs-rounded cs-p-2 cs-mt-2">
+                    <div className="cs-flex cs-items-start cs-justify-between cs-mb-1">
+                      <strong className="cs-font-semibold cs-text-blue-900">🤖 AI Analysis:</strong>
+                      <span className="cs-text-xs cs-bg-blue-200 cs-text-blue-800 cs-px-2 cs-py-0.5 cs-rounded cs-font-semibold">
+                        Prompt API
+                      </span>
+                    </div>
                     <p className="cs-text-xs cs-text-blue-900">
-                      <strong className="cs-font-semibold">🤖 AI Analysis:</strong> {detection.reasoning}
+                      {detection.reasoning}
                     </p>
                   </div>
                 )}
                 
                 {detection.userFriendlyWarning && (
                   <div className="cs-bg-amber-50 cs-rounded cs-p-2 cs-mt-2">
+                    <div className="cs-flex cs-items-start cs-justify-between cs-mb-1">
+                      <strong className="cs-font-semibold cs-text-amber-900">⚠️ What This Means:</strong>
+                      <span className="cs-text-xs cs-bg-amber-200 cs-text-amber-800 cs-px-2 cs-py-0.5 cs-rounded cs-font-semibold">
+                        Writer API
+                      </span>
+                    </div>
                     <p className="cs-text-xs cs-text-amber-900">
-                      <strong className="cs-font-semibold">⚠️ What This Means:</strong> {detection.userFriendlyWarning}
+                      {detection.userFriendlyWarning}
                     </p>
                   </div>
                 )}
                 
                 {detection.educationalTip && (
                   <div className="cs-bg-green-50 cs-rounded cs-p-2 cs-mt-2">
+                    <div className="cs-flex cs-items-start cs-justify-between cs-mb-1">
+                      <strong className="cs-font-semibold cs-text-green-900">💡 Smart Tip:</strong>
+                      <span className="cs-text-xs cs-bg-green-200 cs-text-green-800 cs-px-2 cs-py-0.5 cs-rounded cs-font-semibold">
+                        Writer API
+                      </span>
+                    </div>
                     <p className="cs-text-xs cs-text-green-900">
-                      <strong className="cs-font-semibold">💡 Smart Tip:</strong> {detection.educationalTip}
+                      {detection.educationalTip}
                     </p>
                   </div>
                 )}
@@ -255,9 +273,20 @@ export function Panel() {
       </main>
 
       {/* Footer */}
-      <footer className="cs-border-t cs-border-gray-200 cs-p-3 cs-text-center">
-        <div className="cs-text-xs cs-text-gray-500">
-          Powered by Chrome Built-in AI (Gemini Nano) 🤖
+      <footer className="cs-border-t cs-border-gray-200 cs-p-3">
+        <div className="cs-text-xs cs-text-gray-600 cs-mb-2 cs-text-center cs-font-semibold">
+          Powered by Chrome Built-in AI APIs 🤖
+        </div>
+        <div className="cs-flex cs-gap-2 cs-justify-center cs-flex-wrap">
+          <span className="cs-text-xs cs-bg-blue-100 cs-text-blue-700 cs-px-2 cs-py-1 cs-rounded cs-font-semibold">
+            ✅ Prompt API
+          </span>
+          <span className="cs-text-xs cs-bg-amber-100 cs-text-amber-700 cs-px-2 cs-py-1 cs-rounded cs-font-semibold">
+            ✅ Writer API
+          </span>
+          <span className="cs-text-xs cs-bg-gray-200 cs-text-gray-700 cs-px-2 cs-py-1 cs-rounded cs-font-semibold">
+            ⏳ Summarizer API
+          </span>
         </div>
       </footer>
     </div>
