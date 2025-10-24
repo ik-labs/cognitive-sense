@@ -85,24 +85,45 @@ export class AgentRegistry {
    * Get agents that should run on the given page context
    */
   getActiveAgents(context: PageContext, userSettings: UserSettings): Agent[] {
+    console.log('🔍 AgentRegistry.getActiveAgents() called');
+    console.log('Available agents:', this.getAllAgents().map(a => a.key));
+    console.log('User settings agents:', userSettings.agents);
+    
     return this.getAllAgents().filter(agent => {
+      console.log(`\n📋 Checking agent: ${agent.key}`);
+      
       // Check if agent is enabled globally
-      if (!userSettings.agents[agent.key]) {
+      const isEnabled = userSettings.agents[agent.key];
+      console.log(`  - Enabled: ${isEnabled}`);
+      if (!isEnabled) {
+        console.log(`  ❌ Agent disabled globally`);
         return false;
       }
       
       // Check domain-specific settings
       const domainSettings = userSettings.domains[context.domain];
       if (domainSettings && !domainSettings.enabled) {
+        console.log(`  ❌ Domain disabled for this agent`);
         return false;
       }
       
       if (domainSettings?.agents && !domainSettings.agents[agent.key]) {
+        console.log(`  ❌ Agent disabled for this domain`);
         return false;
       }
       
       // Check if agent can handle this page type
-      return agent.canHandle(context);
+      console.log(`  - Calling canHandle()...`);
+      const canHandle = agent.canHandle(context);
+      console.log(`  - canHandle result: ${canHandle}`);
+      
+      if (canHandle) {
+        console.log(`  ✅ Agent activated!`);
+      } else {
+        console.log(`  ❌ Agent cannot handle this page`);
+      }
+      
+      return canHandle;
     });
   }
   
