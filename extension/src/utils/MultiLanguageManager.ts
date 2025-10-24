@@ -37,30 +37,65 @@ export class MultiLanguageManager {
    */
   detectPageLanguage(pageText: string): string {
     const text = pageText.substring(0, 500); // Sample first 500 chars
+    Debug.debug(`🌐 Detecting language from text: "${text.substring(0, 50)}..."`);
 
     // Script-based detection (most reliable)
-    if (this.containsScript(text, 'devanagari')) return 'hi'; // हिंदी
-    if (this.containsScript(text, 'tamil')) return 'ta'; // தமிழ்
-    if (this.containsScript(text, 'telugu')) return 'te'; // తెలుగు
-    if (this.containsScript(text, 'kannada')) return 'kn'; // ಕನ್ನಡ
-    if (this.containsScript(text, 'japanese')) return 'ja'; // 日本語
-    if (this.containsScript(text, 'chinese')) return 'zh'; // 中文
-    if (this.containsScript(text, 'korean')) return 'ko'; // 한국어
-    if (this.containsScript(text, 'arabic')) return 'ar'; // العربية
+    if (this.containsScript(text, 'devanagari')) {
+      Debug.success('🇮🇳 Detected language: Hindi (Devanagari script)');
+      return 'hi';
+    }
+    if (this.containsScript(text, 'tamil')) {
+      Debug.success('🇮🇳 Detected language: Tamil (Tamil script)');
+      return 'ta';
+    }
+    if (this.containsScript(text, 'telugu')) {
+      Debug.success('🇮🇳 Detected language: Telugu (Telugu script)');
+      return 'te';
+    }
+    if (this.containsScript(text, 'kannada')) {
+      Debug.success('🇮🇳 Detected language: Kannada (Kannada script)');
+      return 'kn';
+    }
+    if (this.containsScript(text, 'japanese')) {
+      Debug.success('🇯🇵 Detected language: Japanese (Hiragana/Katakana/Kanji)');
+      return 'ja';
+    }
+    if (this.containsScript(text, 'chinese')) {
+      Debug.success('🇨🇳 Detected language: Chinese (CJK characters)');
+      return 'zh';
+    }
+    if (this.containsScript(text, 'korean')) {
+      Debug.success('🇰🇷 Detected language: Korean (Hangul)');
+      return 'ko';
+    }
+    if (this.containsScript(text, 'arabic')) {
+      Debug.success('🇸🇦 Detected language: Arabic (Arabic script)');
+      return 'ar';
+    }
 
     // Keyword-based detection
     const lowerText = text.toLowerCase();
     
     // Spanish indicators
-    if (this.hasKeywords(lowerText, ['¿', '¡', 'el ', 'la ', 'de ', 'que ', 'es '])) return 'es';
+    if (this.hasKeywords(lowerText, ['¿', '¡', 'el ', 'la ', 'de ', 'que ', 'es '])) {
+      Debug.success('🇪🇸 Detected language: Spanish (keyword-based)');
+      return 'es';
+    }
     
     // French indicators
-    if (this.hasKeywords(lowerText, ['«', '»', 'le ', 'la ', 'de ', 'que ', 'est '])) return 'fr';
+    if (this.hasKeywords(lowerText, ['«', '»', 'le ', 'la ', 'de ', 'que ', 'est '])) {
+      Debug.success('🇫🇷 Detected language: French (keyword-based)');
+      return 'fr';
+    }
     
     // German indicators
-    if (this.hasKeywords(lowerText, ['ä', 'ö', 'ü', 'ß', 'der ', 'die ', 'das '])) return 'de';
+    if (this.hasKeywords(lowerText, ['ä', 'ö', 'ü', 'ß', 'der ', 'die ', 'das '])) {
+      Debug.success('🇩🇪 Detected language: German (keyword-based)');
+      return 'de';
+    }
 
     // Default to English
+    Debug.info('🇬🇧 Defaulting to English (no other language detected)');
     return 'en';
   }
 
@@ -68,15 +103,22 @@ export class MultiLanguageManager {
    * Translate text to target language using Chrome AI Translator API
    */
   async translateText(text: string, targetLanguage: string = this.userPreferredLanguage): Promise<string> {
+    const langConfig = SUPPORTED_LANGUAGES[targetLanguage];
+    const langName = langConfig?.nativeName || targetLanguage;
+    
     // No translation needed for English
     if (targetLanguage === 'en') {
+      Debug.debug(`📝 Text already in English, no translation needed`);
       return text;
     }
 
     try {
+      Debug.debug(`🔄 Translating to ${langName} (${targetLanguage})`);
+      Debug.debug(`📄 Text to translate: "${text.substring(0, 50)}..."`);
+      
       // Check if Translator API is available
       if (!('Translator' in window)) {
-        Debug.warning('Translator API not available, returning original text');
+        Debug.warning('🚫 Translator API not available in window, returning original text');
         return text;
       }
 
@@ -86,32 +128,42 @@ export class MultiLanguageManager {
       // Create translator if not cached
       if (!translator) {
         Debug.apiCall('Translator', 'start');
+        Debug.debug(`🔍 Checking Translator availability for en→${targetLanguage}`);
         
         const availability = await (window as any).Translator.availability({
           sourceLanguage: 'en',
           targetLanguage: targetLanguage
         });
 
+        Debug.debug(`📊 Translator availability: ${availability}`);
+
         if (availability !== 'available' && availability !== 'downloadable') {
-          Debug.warning(`Translator not available for en-${targetLanguage}`);
+          Debug.warning(`⚠️ Translator not available for en-${targetLanguage} (status: ${availability})`);
           return text;
         }
 
+        Debug.debug(`📥 Creating translator instance for en→${targetLanguage}...`);
         translator = await (window as any).Translator.create({
           sourceLanguage: 'en',
           targetLanguage: targetLanguage
         });
 
         this.translatorCache.set(cacheKey, translator);
-        Debug.apiCall('Translator', 'success', `Created translator for en-${targetLanguage}`);
+        Debug.apiCall('Translator', 'success', `✅ Created translator for en→${targetLanguage}`);
+        Debug.debug(`💾 Cached translator for ${cacheKey}`);
+      } else {
+        Debug.debug(`♻️ Using cached translator for en→${targetLanguage}`);
       }
 
       // Translate the text
+      Debug.debug(`⏳ Translating text...`);
       const translated = await translator.translate(text);
-      Debug.success(`Translated text to ${targetLanguage}`);
+      Debug.success(`✅ Successfully translated to ${langName}`);
+      Debug.debug(`📤 Translated result: "${translated.substring(0, 50)}..."`);
       return translated;
     } catch (error) {
-      Debug.error('Translation failed', error);
+      Debug.error(`❌ Translation failed for ${langName}`, error);
+      Debug.warning(`⚠️ Falling back to original English text`);
       return text; // Return original text on error
     }
   }
