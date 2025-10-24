@@ -9,6 +9,7 @@ interface PanelState {
   error?: string;
   detectedLanguage: string;
   preferredLanguage: string;
+  isTranslating?: boolean;
 }
 
 export function Panel() {
@@ -173,49 +174,64 @@ export function Panel() {
                 
                 // Re-translate all detections
                 if (state.detections.length > 0) {
-                  console.log(`🌐 Language changed to ${newLang}, re-translating detections...`);
-                  
-                  // Re-translate each detection's content
-                  const translatedDetections = await Promise.all(
-                    state.detections.map(async (detection: any) => {
-                      const { multiLanguageManager: mlm } = await import('../utils/MultiLanguageManager');
-                      
-                      // Translate all text fields
-                      const title = newLang !== 'en' 
-                        ? await mlm.translateText(detection.title, newLang)
-                        : detection.title;
-                      
-                      const description = newLang !== 'en'
-                        ? await mlm.translateText(detection.description, newLang)
-                        : detection.description;
-                      
-                      const reasoning = newLang !== 'en'
-                        ? await mlm.translateText(detection.reasoning, newLang)
-                        : detection.reasoning;
-                      
-                      const contentGen = new (await import('../ai/ContentGenerator')).ContentGenerator();
-                      
-                      const userFriendlyWarning = await contentGen.generateUserFriendlyWarning(detection);
-                      const educationalTip = await contentGen.generateEducationalTip(detection);
-                      
-                      return {
-                        ...detection,
-                        title,
-                        description,
-                        reasoning,
-                        userFriendlyWarning,
-                        educationalTip
-                      };
-                    })
-                  );
-                  
+                  // Show loading state
                   setState(prev => ({
                     ...prev,
-                    preferredLanguage: newLang,
-                    detections: translatedDetections
+                    isTranslating: true
                   }));
                   
-                  console.log(`✅ All detection content re-translated to ${newLang}`);
+                  console.log(`🌐 Language changed to ${newLang}, re-translating detections...`);
+                  
+                  try {
+                    // Re-translate each detection's content
+                    const translatedDetections = await Promise.all(
+                      state.detections.map(async (detection: any) => {
+                        const { multiLanguageManager: mlm } = await import('../utils/MultiLanguageManager');
+                        
+                        // Translate all text fields
+                        const title = newLang !== 'en' 
+                          ? await mlm.translateText(detection.title, newLang)
+                          : detection.title;
+                        
+                        const description = newLang !== 'en'
+                          ? await mlm.translateText(detection.description, newLang)
+                          : detection.description;
+                        
+                        const reasoning = newLang !== 'en'
+                          ? await mlm.translateText(detection.reasoning, newLang)
+                          : detection.reasoning;
+                        
+                        const contentGen = new (await import('../ai/ContentGenerator')).ContentGenerator();
+                        
+                        const userFriendlyWarning = await contentGen.generateUserFriendlyWarning(detection);
+                        const educationalTip = await contentGen.generateEducationalTip(detection);
+                        
+                        return {
+                          ...detection,
+                          title,
+                          description,
+                          reasoning,
+                          userFriendlyWarning,
+                          educationalTip
+                        };
+                      })
+                    );
+                    
+                    setState(prev => ({
+                      ...prev,
+                      preferredLanguage: newLang,
+                      detections: translatedDetections,
+                      isTranslating: false
+                    }));
+                    
+                    console.log(`✅ All detection content re-translated to ${newLang}`);
+                  } catch (error) {
+                    console.error('Translation failed:', error);
+                    setState(prev => ({
+                      ...prev,
+                      isTranslating: false
+                    }));
+                  }
                 } else {
                   setState(prev => ({
                     ...prev,
@@ -223,8 +239,11 @@ export function Panel() {
                   }));
                 }
               }}
-              className="cs-text-xs cs-px-2 cs-py-1 cs-border cs-border-gray-300 cs-rounded cs-bg-white cs-cursor-pointer"
-              title="Select language for translations"
+              disabled={state.isTranslating}
+              className={`cs-text-xs cs-px-2 cs-py-1 cs-border cs-border-gray-300 cs-rounded cs-bg-white ${
+                state.isTranslating ? 'cs-opacity-50 cs-cursor-wait' : 'cs-cursor-pointer'
+              }`}
+              title={state.isTranslating ? 'Translating...' : 'Select language for translations'}
             >
               {Object.values(SUPPORTED_LANGUAGES).map(lang => (
                 <option key={lang.code} value={lang.code}>
@@ -232,7 +251,16 @@ export function Panel() {
                 </option>
               ))}
             </select>
-            {state.detectedLanguage !== 'en' && (
+            
+            {/* Loading indicator */}
+            {state.isTranslating && (
+              <span className="cs-text-xs cs-text-blue-600 cs-font-semibold cs-animate-pulse">
+                ⏳ Translating...
+              </span>
+            )}
+            
+            {/* Detected language */}
+            {!state.isTranslating && state.detectedLanguage !== 'en' && (
               <span className="cs-text-xs cs-text-gray-500 cs-font-semibold" title="Auto-detected page language">
                 🌐 {SUPPORTED_LANGUAGES[state.detectedLanguage]?.name || state.detectedLanguage}
               </span>
