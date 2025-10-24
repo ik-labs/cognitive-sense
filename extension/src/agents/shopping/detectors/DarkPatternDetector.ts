@@ -50,13 +50,10 @@ export class DarkPatternDetector implements ShoppingDetector {
     const lines = text.split('\n').filter(line => line.trim().length > 0);
 
     for (const line of lines) {
-      if (line.length > 400) continue;
-      
       const lowerLine = line.toLowerCase();
       
-      // Dark pattern indicators
-      if (/(?:unsubscribe|cancel|opt.?out|hidden|trick|confirm|agree|accept|click here|continue|proceed|next|skip|close|x button)/i.test(lowerLine) ||
-          /(?:confirm.*password|verify.*identity|update.*payment|re.?enter|confirm.*email)/i.test(lowerLine)) {
+      // Dark pattern indicators - more aggressive
+      if (/unsubscribe|cancel|opt.?out|hidden|trick|confirm|agree|accept|click|continue|proceed|next|skip|close|button|free.*trial|auto.?renewal|subscription|difficult|small.*text|terms|conditions|privacy|scroll|find|locate|bury|obscure|deceptive|confusing|misleading/i.test(lowerLine)) {
         patterns.push(line);
       }
     }

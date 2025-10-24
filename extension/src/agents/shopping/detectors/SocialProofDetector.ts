@@ -119,28 +119,27 @@ export class SocialProofDetector implements ShoppingDetector {
   }
 
   private extractReviewData(line: string, _lowerLine: string): SocialProofData | null {
-    // Review count patterns
+    // Review count patterns - more aggressive
     const reviewPatterns = [
+      /(\d+(?:\.\d+)?)\s*(?:out\s*of\s*)?5\s*stars?/i,
       /(\d+(?:,\d{3})*)\s*(?:customer\s*)?reviews?/i,
       /(\d+(?:,\d{3})*)\s*(?:user\s*)?ratings?/i,
       /rated\s*(\d+(?:\.\d+)?)\s*(?:out\s*of\s*5|\/5|\*)/i,
       /(\d+(?:\.\d+)?)\s*stars?\s*(?:out\s*of\s*5|\/5)/i,
-      /(\d+)%\s*(?:of\s*)?(?:customers?\s*)?(?:recommend|satisfied|positive)/i
+      /(\d+)%\s*(?:of\s*)?(?:customers?\s*)?(?:recommend|satisfied|positive)/i,
+      /stars?\s*from/i,
+      /rating|review|stars?|score/i
     ];
 
     for (const pattern of reviewPatterns) {
-      const match = line.match(pattern);
-      if (match) {
-        const number = parseFloat(match[1].replace(/,/g, ''));
-        
-        // Determine if it's a count or rating
-        const isRating = _lowerLine.includes('star') || _lowerLine.includes('rated') || 
-                        _lowerLine.includes('out of') || number <= 5;
+      if (pattern.test(line)) {
+        const match = line.match(/(\d+(?:\.\d+)?)/);
+        const number = match ? parseFloat(match[1].replace(/,/g, '')) : 4.5;
         
         return {
           type: 'reviews',
           text: line,
-          numbers: isRating ? { rating: number, count: 0 } : { count: number }
+          numbers: { rating: number, count: 0 }
         };
       }
     }

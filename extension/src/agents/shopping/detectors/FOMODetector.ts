@@ -50,12 +50,10 @@ export class FOMODetector implements ShoppingDetector {
     const lines = text.split('\n').filter(line => line.trim().length > 0);
 
     for (const line of lines) {
-      if (line.length > 400) continue;
-      
       const lowerLine = line.toLowerCase();
       
-      // FOMO patterns: only, last, limited, exclusive, don't miss, act now
-      if (/(?:only|just|last|final|limited|exclusive|don'?t miss|act now|while\s*(?:stocks?|supplies?)\s*last|everyone|join\s*(?:thousands?|millions?))/i.test(lowerLine)) {
+      // FOMO patterns - more aggressive matching
+      if (/exclusive|members?\s*only|limited\s*edition|vip|invitation|select|rare|special|only.*left|last.*chance|don'?t.*miss|act.*now|everyone|join.*thousands|regret|once.*lifetime|never.*again|opportunity|left.*out/i.test(lowerLine)) {
         patterns.push(line);
       }
     }
